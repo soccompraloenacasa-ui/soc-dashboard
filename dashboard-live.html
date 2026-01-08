@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOC Dashboard - Cómpralo en Casa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ml: '#eab308',
+            dropi: '#ea580c',
+            shopify: '#16a34a',
+            gastos: '#dc2626',
+            profit: '#2563eb',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0a0a0a] text-white min-h-screen">
+  
+  <div class="flex h-screen overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#121212] border-r border-[#2e2e2e] flex flex-col">
+      <div class="p-6 border-b border-[#2e2e2e]">
+        <h1 class="text-xl font-bold">🏠 SOC Hub</h1>
+        <p class="text-gray-500 text-sm">Cómpralo en Casa</p>
+      </div>
+      
+      <nav class="flex-1 p-4 space-y-2">
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#242424] text-white">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          Dashboard
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#1a1a1a] hover:text-ml transition">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-ml"></i>
+          Mercado Libre
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#1a1a1a] hover:text-dropi transition">
+          <i data-lucide="package" class="w-5 h-5 text-dropi"></i>
+          Dropi
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#1a1a1a] hover:text-shopify transition">
+          <i data-lucide="store" class="w-5 h-5 text-shopify"></i>
+          Shopify
+        </a>
+      </nav>
+      
+      <!-- Sync Status -->
+      <div class="p-4 border-t border-[#2e2e2e]">
+        <div id="syncStatus" class="bg-[#1a1a1a] rounded-lg p-3">
+          <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+            Cargando...
+          </div>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+      
+      <!-- Header -->
+      <header class="bg-[#121212] border-b border-[#2e2e2e] px-6 py-4 sticky top-0 z-10">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+            <p class="text-gray-500">Datos reales de Mercado Libre</p>
+          </div>
+          
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2">
+              <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+              <select id="daysSelect" class="bg-transparent text-sm focus:outline-none" onchange="loadAllData()">
+                <option value="7">Últimos 7 días</option>
+                <option value="30" selected>Últimos 30 días</option>
+                <option value="90">Últimos 90 días</option>
+                <option value="365">Último año</option>
+              </select>
+            </div>
+            
+            <button onclick="loadAllData()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 transition flex items-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              Actualizar
+            </button>
+          </div>
+        </div>
+      </header>
+      
+      <div class="p-6 space-y-6">
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-20">
+          <i data-lucide="loader" class="w-12 h-12 animate-spin mx-auto text-ml mb-4"></i>
+          <p class="text-gray-400">Cargando datos del API...</p>
+          <p class="text-gray-600 text-sm mt-2" id="apiUrl"></p>
+        </div>
+        
+        <!-- Error State -->
+        <div id="errorState" class="hidden text-center py-20">
+          <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-red-500 mb-4"></i>
+          <p class="text-red-400 font-medium">Error al cargar datos</p>
+          <p class="text-gray-500 text-sm mt-2" id="errorMessage"></p>
+          <button onclick="loadAllData()" class="mt-4 px-4 py-2 bg-[#1a1a1a] rounded-lg hover:bg-[#242424] transition">
+            Reintentar
+          </button>
+        </div>
+        
+        <!-- Dashboard Content (hidden until data loads) -->
+        <div id="dashboardContent" class="hidden space-y-6">
+          
+          <!-- Metric Cards -->
+          <div class="grid grid-cols-4 gap-4">
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-gray-500 text-sm">Ventas Totales</span>
+                <div class="p-2 bg-shopify/20 rounded-lg">
+                  <i data-lucide="dollar-sign" class="w-5 h-5 text-shopify"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold" id="totalRevenue">$0</p>
+              <p class="text-sm mt-1 font-medium" id="revenueChange">-</p>
+            </div>
+            
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-gray-500 text-sm">Órdenes</span>
+                <div class="p-2 bg-ml/20 rounded-lg">
+                  <i data-lucide="shopping-cart" class="w-5 h-5 text-ml"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold" id="totalOrders">0</p>
+              <p class="text-sm mt-1 font-medium" id="ordersChange">-</p>
+            </div>
+            
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-gray-500 text-sm">Ticket Promedio</span>
+                <div class="p-2 bg-dropi/20 rounded-lg">
+                  <i data-lucide="tag" class="w-5 h-5 text-dropi"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold" id="avgTicket">$0</p>
+              <p class="text-gray-500 text-sm mt-1">por orden</p>
+            </div>
+            
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-gray-500 text-sm">Órdenes Sincronizadas</span>
+                <div class="p-2 bg-profit/20 rounded-lg">
+                  <i data-lucide="database" class="w-5 h-5 text-profit"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold" id="syncedOrders">0</p>
+              <p class="text-gray-500 text-sm mt-1" id="dateRange">-</p>
+            </div>
+          </div>
+          
+          <!-- Charts Row -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="col-span-2 bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Ventas por Día</h3>
+                <span class="text-ml text-sm">● Mercado Libre</span>
+              </div>
+              <canvas id="salesChart" height="200"></canvas>
+            </div>
+            
+            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+              <h3 class="font-semibold mb-4">Estado de Órdenes</h3>
+              <canvas id="statusChart" height="200"></canvas>
+              <div id="statusLegend" class="mt-4 space-y-2 text-sm"></div>
+            </div>
+          </div>
+          
+          <!-- Top Products -->
+          <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Top Productos</h3>
+              <span class="text-gray-500 text-sm" id="productsPeriod">Últimos 30 días</span>
+            </div>
+            <table class="w-full">
+              <thead>
+                <tr class="text-left text-gray-500 text-sm border-b border-[#2e2e2e]">
+                  <th class="pb-3 font-medium">#</th>
+                  <th class="pb-3 font-medium">Producto</th>
+                  <th class="pb-3 font-medium text-right">Unidades</th>
+                  <th class="pb-3 font-medium text-right">Ingresos</th>
+                  <th class="pb-3 font-medium text-right">Órdenes</th>
+                </tr>
+              </thead>
+              <tbody id="productsTable" class="text-sm">
+                <tr><td colspan="5" class="py-4 text-center text-gray-500">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Recent Orders -->
+          <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Órdenes Recientes</h3>
+            </div>
+            <table class="w-full">
+              <thead>
+                <tr class="text-left text-gray-500 text-sm border-b border-[#2e2e2e]">
+                  <th class="pb-3 font-medium">ID</th>
+                  <th class="pb-3 font-medium">Fecha</th>
+                  <th class="pb-3 font-medium">Comprador</th>
+                  <th class="pb-3 font-medium">Estado</th>
+                  <th class="pb-3 font-medium text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTable" class="text-sm">
+                <tr><td colspan="5" class="py-4 text-center text-gray-500">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script>
+    // API Base URL
+    const API_BASE = 'https://mercado-libre-production-b0cc.up.railway.app/api/v1';
+    const CHANNEL_ID = 1;
+    
+    // Charts instances
+    let salesChart = null;
+    let statusChart = null;
+    
+    // Format currency
+    function formatCOP(value) {
+      if (value >= 1000000) {
+        return '$' + (value / 1000000).toFixed(1) + 'M';
+      } else if (value >= 1000) {
+        return '$' + (value / 1000).toFixed(0) + 'K';
+      }
+      return '$' + value.toLocaleString('es-CO');
+    }
+    
+    // Format date
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+    }
+    
+    // Show loading
+    function showLoading() {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.add('hidden');
+    }
+    
+    // Show error
+    function showError(message) {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('errorState').classList.remove('hidden');
+      document.getElementById('dashboardContent').classList.add('hidden');
+      document.getElementById('errorMessage').textContent = message;
+    }
+    
+    // Show content
+    function showContent() {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
+    }
+    
+    // Fetch with error handling
+    async function fetchAPI(endpoint) {
+      const url = `${API_BASE}${endpoint}`;
+      console.log('Fetching:', url);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    }
+    
+    // Load sync status
+    async function loadSyncStatus() {
+      try {
+        const data = await fetchAPI(`/ml/sync/status?channel_id=${CHANNEL_ID}`);
+        const el = document.getElementById('syncStatus');
+        
+        if (data.status === 'running') {
+          el.innerHTML = `
+            <div class="flex items-center gap-2 text-sm text-ml mb-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>
+              Sincronizando...
+            </div>
+            <div class="w-full bg-[#2e2e2e] rounded-full h-2">
+              <div class="bg-ml h-2 rounded-full" style="width: ${data.progress_percent}%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">${data.processed_orders?.toLocaleString()} / ${data.total_orders?.toLocaleString()}</p>
+          `;
+        } else if (data.status === 'completed') {
+          el.innerHTML = `
+            <div class="flex items-center gap-2 text-sm text-shopify">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              Sync completo
+            </div>
+            <p class="text-xs text-gray-500 mt-1">${data.processed_orders?.toLocaleString()} órdenes</p>
+          `;
+        } else {
+          el.innerHTML = `
+            <div class="flex items-center gap-2 text-sm text-gray-400">
+              <i data-lucide="database" class="w-4 h-4"></i>
+              ${data.status || 'Sin sync'}
+            </div>
+          `;
+        }
+        lucide.createIcons();
+      } catch (e) {
+        console.error('Error loading sync status:', e);
+      }
+    }
+    
+    // Load dashboard metrics
+    async function loadDashboard(days) {
+      const data = await fetchAPI(`/ml/analytics/dashboard?channel_id=${CHANNEL_ID}&days=${days}`);
+      const m = data.metrics;
+      
+      document.getElementById('totalRevenue').textContent = m.total_revenue.formatted;
+      document.getElementById('totalOrders').textContent = m.total_orders.value.toLocaleString();
+      document.getElementById('avgTicket').textContent = m.avg_ticket.formatted;
+      
+      const revenueChange = m.total_revenue.change_percent;
+      const ordersChange = m.total_orders.change_percent;
+      
+      document.getElementById('revenueChange').textContent = 
+        (revenueChange >= 0 ? '↑ ' : '↓ ') + Math.abs(revenueChange) + '% vs periodo anterior';
+      document.getElementById('revenueChange').className = 
+        'text-sm mt-1 font-medium ' + (revenueChange >= 0 ? 'text-shopify' : 'text-gastos');
+      
+      document.getElementById('ordersChange').textContent = 
+        (ordersChange >= 0 ? '↑ ' : '↓ ') + Math.abs(ordersChange) + '% vs periodo anterior';
+      document.getElementById('ordersChange').className = 
+        'text-sm mt-1 font-medium ' + (ordersChange >= 0 ? 'text-shopify' : 'text-gastos');
+    }
+    
+    // Load summary
+    async function loadSummary() {
+      const data = await fetchAPI(`/ml/analytics/summary?channel_id=${CHANNEL_ID}`);
+      
+      document.getElementById('syncedOrders').textContent = data.all_time.orders.toLocaleString();
+      
+      if (data.all_time.first_order && data.all_time.last_order) {
+        const from = new Date(data.all_time.first_order).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+        const to = new Date(data.all_time.last_order).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+        document.getElementById('dateRange').textContent = `${from} - ${to}`;
+      }
+    }
+    
+    // Load sales chart
+    async function loadSalesChart(days) {
+      const data = await fetchAPI(`/ml/analytics/sales-by-day?channel_id=${CHANNEL_ID}&days=${days}`);
+      
+      const labels = data.data.map(d => formatDate(d.date));
+      const revenues = data.data.map(d => d.revenue / 1000000); // En millones
+      
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      
+      if (salesChart) salesChart.destroy();
+      
+      salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Ventas',
+            data: revenues,
+            borderColor: '#eab308',
+            backgroundColor: 'rgba(234, 179, 8, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#2e2e2e' }, ticks: { color: '#888', maxTicksLimit: 10 } },
+            y: { grid: { color: '#2e2e2e' }, ticks: { color: '#888', callback: v => '$' + v + 'M' } }
+          }
+        }
+      });
+    }
+    
+    // Load status chart
+    async function loadStatusChart(days) {
+      const data = await fetchAPI(`/ml/analytics/orders-by-status?channel_id=${CHANNEL_ID}&days=${days}`);
+      
+      const colors = {
+        'paid': '#22c55e',
+        'cancelled': '#ef4444',
+        'pending': '#eab308',
+        'confirmed': '#3b82f6',
+      };
+      
+      const labels = data.statuses.map(s => s.status);
+      const counts = data.statuses.map(s => s.count);
+      const bgColors = data.statuses.map(s => colors[s.status] || '#6b7280');
+      
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      
+      if (statusChart) statusChart.destroy();
+      
+      statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{ data: counts, backgroundColor: bgColors, borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          cutout: '70%'
+        }
+      });
+      
+      // Legend
+      const legendEl = document.getElementById('statusLegend');
+      legendEl.innerHTML = data.statuses.map(s => `
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full" style="background: ${colors[s.status] || '#6b7280'}"></span>
+            ${s.status}
+          </span>
+          <span class="font-medium">${s.count}</span>
+        </div>
+      `).join('');
+    }
+    
+    // Load top products
+    async function loadTopProducts(days) {
+      const data = await fetchAPI(`/ml/analytics/top-products?channel_id=${CHANNEL_ID}&days=${days}&limit=10`);
+      
+      document.getElementById('productsPeriod').textContent = `Últimos ${days} días`;
+      
+      const tbody = document.getElementById('productsTable');
+      
+      if (!data.products || data.products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">No hay datos</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = data.products.map((p, i) => `
+        <tr class="border-b border-[#2e2e2e] hover:bg-[#242424]">
+          <td class="py-3 text-gray-500">${i + 1}</td>
+          <td class="py-3 font-medium">${p.title}</td>
+          <td class="py-3 text-right">${p.units_sold.toLocaleString()}</td>
+          <td class="py-3 text-right font-bold text-shopify">${formatCOP(p.revenue)}</td>
+          <td class="py-3 text-right text-gray-400">${p.orders_count}</td>
+        </tr>
+      `).join('');
+    }
+    
+    // Load recent orders
+    async function loadRecentOrders() {
+      const data = await fetchAPI(`/ml/analytics/recent-orders?channel_id=${CHANNEL_ID}&limit=10`);
+      
+      const tbody = document.getElementById('ordersTable');
+      
+      const statusColors = {
+        'paid': 'text-shopify',
+        'cancelled': 'text-gastos',
+        'pending': 'text-ml',
+      };
+      
+      tbody.innerHTML = data.orders.map(o => `
+        <tr class="border-b border-[#2e2e2e] hover:bg-[#242424]">
+          <td class="py-3 font-mono text-xs text-gray-400">${o.id}</td>
+          <td class="py-3">${formatDate(o.date)}</td>
+          <td class="py-3">${o.buyer || '-'}</td>
+          <td class="py-3 ${statusColors[o.status] || 'text-gray-400'} font-medium">${o.status}</td>
+          <td class="py-3 text-right font-bold">${formatCOP(o.total)}</td>
+        </tr>
+      `).join('');
+    }
+    
+    // Load all data
+    async function loadAllData() {
+      showLoading();
+      document.getElementById('apiUrl').textContent = API_BASE;
+      
+      const days = parseInt(document.getElementById('daysSelect').value);
+      
+      try {
+        await Promise.all([
+          loadSyncStatus(),
+          loadDashboard(days),
+          loadSummary(),
+          loadSalesChart(days),
+          loadStatusChart(days),
+          loadTopProducts(days),
+          loadRecentOrders(),
+        ]);
+        
+        showContent();
+        lucide.createIcons();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showError(error.message);
+      }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadAllData();
+      
+      // Refresh sync status every 30 seconds
+      setInterval(loadSyncStatus, 30000);
+    });
+  </script>
+  
+</body>
+</html>
