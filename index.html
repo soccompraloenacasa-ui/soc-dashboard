@@ -466,14 +466,17 @@
     
     async function loadSyncStatus() {
       try {
-        const data = await fetchAPI(`/ml/sync/status?channel_id=${CHANNEL_ID}`);
+        const [syncData, summaryData] = await Promise.all([
+          fetchAPI(`/ml/sync/status?channel_id=${CHANNEL_ID}`),
+          fetchAPI(`/ml/analytics/summary?channel_id=${CHANNEL_ID}`)
+        ]);
         const el = document.getElementById('syncStatus');
-        if (data.status === 'running') {
-          el.innerHTML = `<div class="flex items-center gap-2 text-sm text-ml mb-2"><i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>Sincronizando...</div><div class="w-full bg-[#2e2e2e] rounded-full h-2"><div class="bg-ml h-2 rounded-full" style="width: ${data.progress_percent}%"></div></div><p class="text-xs text-gray-500 mt-1">${data.processed_orders?.toLocaleString()} / ${data.total_orders?.toLocaleString()}</p>`;
-        } else if (data.status === 'completed') {
-          el.innerHTML = `<div class="flex items-center gap-2 text-sm text-shopify"><i data-lucide="check-circle" class="w-4 h-4"></i>Sync completo</div><p class="text-xs text-gray-500 mt-1">${data.processed_orders?.toLocaleString()} ordenes</p>`;
+        const totalInDB = summaryData.all_time?.orders || 0;
+        
+        if (syncData.status === 'running') {
+          el.innerHTML = `<div class="flex items-center gap-2 text-sm text-ml mb-2"><i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>Sincronizando...</div><div class="w-full bg-[#2e2e2e] rounded-full h-2"><div class="bg-ml h-2 rounded-full" style="width: ${syncData.progress_percent}%"></div></div><p class="text-xs text-gray-500 mt-1">${syncData.processed_orders?.toLocaleString()} / ${syncData.total_orders?.toLocaleString()}</p><p class="text-xs text-gray-400 mt-1">En DB: ${totalInDB.toLocaleString()}</p>`;
         } else {
-          el.innerHTML = `<div class="flex items-center gap-2 text-sm text-gray-400"><i data-lucide="database" class="w-4 h-4"></i>${data.status || 'Sin sync'}</div>`;
+          el.innerHTML = `<div class="flex items-center gap-2 text-sm text-shopify"><i data-lucide="check-circle" class="w-4 h-4"></i>Datos listos</div><p class="text-xs text-gray-500 mt-1">${totalInDB.toLocaleString()} ordenes en DB</p>`;
         }
         lucide.createIcons();
       } catch (e) { console.error('Error:', e); }
