@@ -466,12 +466,12 @@
     
     async function loadSyncStatus() {
       try {
-        const [syncData, summaryData] = await Promise.all([
+        const [syncData, statsData] = await Promise.all([
           fetchAPI(`/ml/sync/status?channel_id=${CHANNEL_ID}`),
-          fetchAPI(`/ml/analytics/summary?channel_id=${CHANNEL_ID}`)
+          fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`)
         ]);
         const el = document.getElementById('syncStatus');
-        const totalInDB = summaryData.all_time?.orders || 0;
+        const totalInDB = statsData.total_orders || 0;
         
         if (syncData.status === 'running') {
           el.innerHTML = `<div class="flex items-center gap-2 text-sm text-ml mb-2"><i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>Sincronizando...</div><div class="w-full bg-[#2e2e2e] rounded-full h-2"><div class="bg-ml h-2 rounded-full" style="width: ${syncData.progress_percent}%"></div></div><p class="text-xs text-gray-500 mt-1">${syncData.processed_orders?.toLocaleString()} / ${syncData.total_orders?.toLocaleString()}</p><p class="text-xs text-gray-400 mt-1">En DB: ${totalInDB.toLocaleString()}</p>`;
@@ -498,11 +498,11 @@
     }
     
     async function loadSummary() {
-      const data = await fetchAPI(`/ml/analytics/summary?channel_id=${CHANNEL_ID}`);
-      document.getElementById('syncedOrders').textContent = data.all_time.orders.toLocaleString();
-      if (data.all_time.first_order && data.all_time.last_order) {
-        const from = new Date(data.all_time.first_order).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
-        const to = new Date(data.all_time.last_order).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+      const data = await fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`);
+      document.getElementById('syncedOrders').textContent = data.total_orders.toLocaleString();
+      if (data.date_range.from && data.date_range.to) {
+        const from = new Date(data.date_range.from).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
+        const to = new Date(data.date_range.to).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' });
         document.getElementById('dateRangeInfo').textContent = `${from} - ${to}`;
       }
     }
