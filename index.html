@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     tailwind.config = {
-      theme: { extend: { colors: { ml: '#eab308', dropi: '#ea580c', shopify: '#16a34a', gastos: '#dc2626', profit: '#2563eb' } } }
+      theme: { extend: { colors: { ml: '#eab308', dropi: '#ea580c', shopify: '#16a34a', meta: '#0081fb', gastos: '#dc2626', profit: '#2563eb' } } }
     }
   </script>
   <style>
@@ -23,6 +23,8 @@
     .status-active { background: #22c55e20; color: #22c55e; }
     .status-paused { background: #eab30820; color: #eab308; }
     .status-closed { background: #ef444420; color: #ef4444; }
+    .platform-card { transition: all 0.2s; }
+    .platform-card:hover { transform: translateY(-2px); }
   </style>
 </head>
 <body class="bg-[#0a0a0a] text-white min-h-screen">
@@ -79,6 +81,14 @@
         </div>
         <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 opacity-50"><i data-lucide="package" class="w-5 h-5 text-dropi"></i>Dropi (pronto)</a>
         <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 opacity-50"><i data-lucide="store" class="w-5 h-5 text-shopify"></i>Shopify (pronto)</a>
+        
+        <!-- ADMIN SECTION -->
+        <div class="pt-4 mt-4 border-t border-[#2e2e2e]">
+          <p class="px-4 text-xs text-gray-600 uppercase tracking-wider mb-2">Administración</p>
+          <a href="#" onclick="navigateTo('admin'); return false;" id="nav-admin" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#1a1a1a] transition">
+            <i data-lucide="settings" class="w-5 h-5"></i>Conexiones
+          </a>
+        </div>
       </nav>
       <div class="p-4 border-t border-[#2e2e2e]">
         <div id="syncStatus" class="bg-[#1a1a1a] rounded-lg p-3">
@@ -123,6 +133,183 @@
             </div>
             <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><div class="flex items-center justify-between mb-4"><h3 class="font-semibold">Top 10 Productos</h3><button onclick="navigateTo('ml-productos')" class="text-sm text-ml hover:underline">Ver todos →</button></div><table class="w-full"><thead><tr class="text-left text-gray-500 text-sm border-b border-[#2e2e2e]"><th class="pb-3">#</th><th class="pb-3">Producto</th><th class="pb-3 text-right">Unidades</th><th class="pb-3 text-right">Ingresos</th><th class="pb-3 text-right">Órdenes</th></tr></thead><tbody id="productsTable" class="text-sm"></tbody></table></div>
           </div>
+        </div>
+      </div>
+      
+      <!-- ADMIN / CONEXIONES -->
+      <div id="view-admin" class="view hidden">
+        <header class="bg-[#121212] border-b border-[#2e2e2e] px-6 py-4 sticky top-0 z-20">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="settings" class="w-6 h-6"></i>Conexiones</h2>
+              <p class="text-gray-500">Configura las conexiones a tus plataformas</p>
+            </div>
+            <button onclick="loadAdminStatus()" class="px-4 py-2 bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg hover:bg-[#242424] flex items-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar Estado
+            </button>
+          </div>
+        </header>
+        <div class="p-6 space-y-6">
+          
+          <!-- Status Overview -->
+          <div class="grid grid-cols-4 gap-4" id="admin-status-cards">
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
+              <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 text-ml"></i>
+              <p class="font-medium">Mercado Libre</p>
+              <p class="text-xs text-gray-500 mt-1" id="status-ml">Cargando...</p>
+            </div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
+              <i data-lucide="package" class="w-8 h-8 mx-auto mb-2 text-dropi"></i>
+              <p class="font-medium">Dropi</p>
+              <p class="text-xs text-gray-500 mt-1" id="status-dropi">Cargando...</p>
+            </div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
+              <i data-lucide="store" class="w-8 h-8 mx-auto mb-2 text-shopify"></i>
+              <p class="font-medium">Shopify</p>
+              <p class="text-xs text-gray-500 mt-1" id="status-shopify">Cargando...</p>
+            </div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
+              <i data-lucide="megaphone" class="w-8 h-8 mx-auto mb-2 text-meta"></i>
+              <p class="font-medium">Meta Ads</p>
+              <p class="text-xs text-gray-500 mt-1" id="status-meta">Cargando...</p>
+            </div>
+          </div>
+          
+          <!-- Platform Cards -->
+          <div class="grid grid-cols-2 gap-6">
+            
+            <!-- MERCADO LIBRE -->
+            <div class="bg-[#1a1a1a] rounded-xl border border-[#2e2e2e] overflow-hidden">
+              <div class="bg-ml/10 px-5 py-4 border-b border-[#2e2e2e]">
+                <h3 class="font-semibold flex items-center gap-2">
+                  <i data-lucide="shopping-bag" class="w-5 h-5 text-ml"></i>
+                  Mercado Libre
+                </h3>
+                <p class="text-gray-500 text-sm">Conecta tus cuentas de vendedor</p>
+              </div>
+              <div class="p-5 space-y-4">
+                <div id="ml-accounts-list" class="space-y-3">
+                  <!-- Will be populated dynamically -->
+                </div>
+                <div class="pt-4 border-t border-[#2e2e2e]">
+                  <p class="text-xs text-gray-500 mb-3">Para conectar una nueva cuenta, el dueño debe autorizar el acceso:</p>
+                  <div class="flex gap-2">
+                    <button onclick="connectML(2)" class="flex-1 px-3 py-2 bg-[#242424] hover:bg-[#2e2e2e] rounded-lg text-sm">Conectar Cuenta 2</button>
+                    <button onclick="connectML(3)" class="flex-1 px-3 py-2 bg-[#242424] hover:bg-[#2e2e2e] rounded-lg text-sm">Conectar Cuenta 3</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- DROPI -->
+            <div class="bg-[#1a1a1a] rounded-xl border border-[#2e2e2e] overflow-hidden">
+              <div class="bg-dropi/10 px-5 py-4 border-b border-[#2e2e2e]">
+                <h3 class="font-semibold flex items-center gap-2">
+                  <i data-lucide="package" class="w-5 h-5 text-dropi"></i>
+                  Dropi
+                </h3>
+                <p class="text-gray-500 text-sm">Conecta tu cuenta de Dropi</p>
+              </div>
+              <div class="p-5">
+                <div id="dropi-status" class="mb-4 p-3 rounded-lg bg-[#242424]">
+                  <span class="text-gray-400 text-sm">Estado: No conectado</span>
+                </div>
+                <form id="dropi-form" onsubmit="connectDropi(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-sm text-gray-400 mb-1">Email</label>
+                    <input type="email" id="dropi-email" required placeholder="tu@email.com" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-dropi focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-sm text-gray-400 mb-1">Contraseña</label>
+                    <input type="password" id="dropi-password" required placeholder="••••••••" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-dropi focus:outline-none">
+                  </div>
+                  <button type="submit" id="dropi-submit" class="w-full px-4 py-2 bg-dropi text-white font-medium rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2">
+                    <i data-lucide="plug" class="w-4 h-4"></i>
+                    Conectar Dropi
+                  </button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- SHOPIFY -->
+            <div class="bg-[#1a1a1a] rounded-xl border border-[#2e2e2e] overflow-hidden">
+              <div class="bg-shopify/10 px-5 py-4 border-b border-[#2e2e2e]">
+                <h3 class="font-semibold flex items-center gap-2">
+                  <i data-lucide="store" class="w-5 h-5 text-shopify"></i>
+                  Shopify
+                </h3>
+                <p class="text-gray-500 text-sm">Conecta tu tienda Shopify</p>
+              </div>
+              <div class="p-5">
+                <div id="shopify-status" class="mb-4 p-3 rounded-lg bg-[#242424]">
+                  <span class="text-gray-400 text-sm">Estado: No conectado</span>
+                </div>
+                <form id="shopify-form" onsubmit="connectShopify(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-sm text-gray-400 mb-1">URL de la tienda</label>
+                    <input type="text" id="shopify-url" required placeholder="mi-tienda.myshopify.com" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-shopify focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-sm text-gray-400 mb-1">Access Token</label>
+                    <input type="password" id="shopify-token" required placeholder="shpat_xxxxx" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-shopify focus:outline-none">
+                    <p class="text-xs text-gray-600 mt-1">Obtén el token en Settings → Apps → Develop apps</p>
+                  </div>
+                  <button type="submit" id="shopify-submit" class="w-full px-4 py-2 bg-shopify text-white font-medium rounded-lg hover:bg-green-600 flex items-center justify-center gap-2">
+                    <i data-lucide="plug" class="w-4 h-4"></i>
+                    Conectar Shopify
+                  </button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- META ADS -->
+            <div class="bg-[#1a1a1a] rounded-xl border border-[#2e2e2e] overflow-hidden">
+              <div class="bg-meta/10 px-5 py-4 border-b border-[#2e2e2e]">
+                <h3 class="font-semibold flex items-center gap-2">
+                  <i data-lucide="megaphone" class="w-5 h-5 text-meta"></i>
+                  Meta Ads
+                </h3>
+                <p class="text-gray-500 text-sm">Conecta tu cuenta de Meta Business</p>
+              </div>
+              <div class="p-5">
+                <div id="meta-status" class="mb-4 p-3 rounded-lg bg-[#242424]">
+                  <span class="text-gray-400 text-sm">Estado: No conectado</span>
+                </div>
+                <div class="space-y-4">
+                  <p class="text-sm text-gray-400">Conecta tu cuenta de Meta para sincronizar datos de Facebook Ads e Instagram Ads.</p>
+                  <button onclick="connectMeta()" id="meta-connect-btn" class="w-full px-4 py-2 bg-meta text-white font-medium rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    Conectar con Meta
+                  </button>
+                  <p class="text-xs text-gray-600">Se abrirá una ventana para autorizar el acceso a tu cuenta de Meta Business.</p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- Channels Table -->
+          <div class="bg-[#1a1a1a] rounded-xl border border-[#2e2e2e] overflow-hidden">
+            <div class="px-5 py-4 border-b border-[#2e2e2e]">
+              <h3 class="font-semibold">Todos los Canales</h3>
+            </div>
+            <div class="p-5">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-gray-500 border-b border-[#2e2e2e]">
+                    <th class="text-left pb-3">ID</th>
+                    <th class="text-left pb-3">Canal</th>
+                    <th class="text-left pb-3">Tipo</th>
+                    <th class="text-left pb-3">External ID</th>
+                    <th class="text-center pb-3">Credenciales</th>
+                    <th class="text-center pb-3">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="channels-table"></tbody>
+              </table>
+            </div>
+          </div>
+          
         </div>
       </div>
       
@@ -179,7 +366,7 @@
         </div>
       </div>
       
-      <!-- ML PRODUCTOS (Ventas por Producto) -->
+      <!-- ML PRODUCTOS -->
       <div id="view-ml-productos" class="view hidden">
         <header class="bg-[#121212] border-b border-[#2e2e2e] px-6 py-4 sticky top-0 z-20">
           <div class="flex items-center justify-between">
@@ -200,26 +387,10 @@
             <div class="flex items-center justify-between mb-4">
               <span class="text-gray-500 text-sm">Mostrando <span id="products-showing">0</span> de <span id="products-total">0</span></span>
               <select id="productSort" onchange="sortProducts()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                <optgroup label="Por Ingresos">
-                  <option value="revenue_desc">Mayor ingreso ↓</option>
-                  <option value="revenue_asc">Menor ingreso ↑</option>
-                </optgroup>
-                <optgroup label="Por Unidades">
-                  <option value="units_desc">Más unidades ↓</option>
-                  <option value="units_asc">Menos unidades ↑</option>
-                </optgroup>
-                <optgroup label="Por Órdenes">
-                  <option value="orders_desc">Más órdenes ↓</option>
-                  <option value="orders_asc">Menos órdenes ↑</option>
-                </optgroup>
-                <optgroup label="Por Nombre">
-                  <option value="name_asc">Nombre A-Z</option>
-                  <option value="name_desc">Nombre Z-A</option>
-                </optgroup>
-                <optgroup label="Por Rentabilidad">
-                  <option value="net_desc">Mayor neto ↓</option>
-                  <option value="net_asc">Menor neto ↑</option>
-                </optgroup>
+                <optgroup label="Por Ingresos"><option value="revenue_desc">Mayor ingreso ↓</option><option value="revenue_asc">Menor ingreso ↑</option></optgroup>
+                <optgroup label="Por Unidades"><option value="units_desc">Más unidades ↓</option><option value="units_asc">Menos unidades ↑</option></optgroup>
+                <optgroup label="Por Nombre"><option value="name_asc">Nombre A-Z</option><option value="name_desc">Nombre Z-A</option></optgroup>
+                <optgroup label="Por Rentabilidad"><option value="net_desc">Mayor neto ↓</option><option value="net_asc">Menor neto ↑</option></optgroup>
               </select>
             </div>
             <table class="w-full text-sm"><thead><tr class="text-gray-500 border-b border-[#2e2e2e]"><th class="text-left pb-3">#</th><th class="text-left pb-3">Producto</th><th class="text-right pb-3">Unidades</th><th class="text-right pb-3">Ingresos</th><th class="text-right pb-3">Envío</th><th class="text-right pb-3">Fee</th><th class="text-right pb-3">Neto</th></tr></thead><tbody id="all-products-table"></tbody></table>
@@ -232,170 +403,49 @@
         </div>
       </div>
       
-      <!-- ML INVENTARIO (NUEVO) -->
+      <!-- ML INVENTARIO -->
       <div id="view-ml-inventario" class="view hidden">
         <header class="bg-[#121212] border-b border-[#2e2e2e] px-6 py-4 sticky top-0 z-20">
           <div class="flex items-center justify-between">
-            <div><h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="package" class="w-6 h-6 text-ml"></i>Inventario ML</h2><p class="text-gray-500">Todos los productos sincronizados de Mercado Libre</p></div>
+            <div><h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="package" class="w-6 h-6 text-ml"></i>Inventario ML</h2><p class="text-gray-500">Todos los productos sincronizados</p></div>
             <div class="flex items-center gap-4">
-              <button onclick="syncMLProducts()" id="syncProductsBtn" class="px-4 py-2 bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg hover:bg-[#242424] flex items-center gap-2 text-sm">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>Sincronizar Productos
-              </button>
-              <button onclick="loadMLInventario()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar
-              </button>
+              <button onclick="syncMLProducts()" id="syncProductsBtn" class="px-4 py-2 bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg hover:bg-[#242424] flex items-center gap-2 text-sm"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Sincronizar</button>
+              <button onclick="loadMLInventario()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
             </div>
           </div>
         </header>
         <div class="p-6 space-y-6">
-          <!-- Stats Cards -->
-          <div class="grid grid-cols-6 gap-4" id="inv-stats">
-            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
-              <p class="text-gray-500 text-xs mb-1">Total Productos</p>
-              <p class="text-2xl font-bold" id="inv-total">0</p>
-            </div>
-            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
-              <p class="text-gray-500 text-xs mb-1">Activos</p>
-              <p class="text-2xl font-bold text-green-500" id="inv-active">0</p>
-            </div>
-            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
-              <p class="text-gray-500 text-xs mb-1">Pausados</p>
-              <p class="text-2xl font-bold text-yellow-500" id="inv-paused">0</p>
-            </div>
-            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
-              <p class="text-gray-500 text-xs mb-1">Stock Total</p>
-              <p class="text-2xl font-bold text-blue-500" id="inv-stock">0</p>
-            </div>
-            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
-              <p class="text-gray-500 text-xs mb-1">Con Ventas</p>
-              <p class="text-2xl font-bold text-purple-500" id="inv-with-sales">0</p>
-            </div>
-            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center">
-              <p class="text-gray-500 text-xs mb-1">Sin Ventas</p>
-              <p class="text-2xl font-bold text-red-500" id="inv-no-sales">0</p>
-            </div>
+          <div class="grid grid-cols-6 gap-4">
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center"><p class="text-gray-500 text-xs mb-1">Total</p><p class="text-2xl font-bold" id="inv-total">0</p></div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center"><p class="text-gray-500 text-xs mb-1">Activos</p><p class="text-2xl font-bold text-green-500" id="inv-active">0</p></div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center"><p class="text-gray-500 text-xs mb-1">Pausados</p><p class="text-2xl font-bold text-yellow-500" id="inv-paused">0</p></div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center"><p class="text-gray-500 text-xs mb-1">Stock</p><p class="text-2xl font-bold text-blue-500" id="inv-stock">0</p></div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center"><p class="text-gray-500 text-xs mb-1">Con Ventas</p><p class="text-2xl font-bold text-purple-500" id="inv-with-sales">0</p></div>
+            <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e] text-center"><p class="text-gray-500 text-xs mb-1">Sin Ventas</p><p class="text-2xl font-bold text-red-500" id="inv-no-sales">0</p></div>
           </div>
-          
-          <!-- Filters -->
           <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#2e2e2e]">
             <div class="flex flex-wrap items-center gap-4">
-              <div class="flex items-center gap-2">
-                <label class="text-gray-500 text-sm">Estado:</label>
-                <select id="inv-filter-status" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                  <option value="">Todos</option>
-                  <option value="active">Activos</option>
-                  <option value="paused">Pausados</option>
-                  <option value="closed">Cerrados</option>
-                </select>
-              </div>
-              <div class="flex items-center gap-2">
-                <label class="text-gray-500 text-sm">Stock:</label>
-                <select id="inv-filter-stock" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                  <option value="">Todos</option>
-                  <option value="true">Con stock</option>
-                  <option value="false">Sin stock</option>
-                </select>
-              </div>
-              <div class="flex items-center gap-2">
-                <label class="text-gray-500 text-sm">Ventas:</label>
-                <select id="inv-filter-sales" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                  <option value="">Todos</option>
-                  <option value="true">Con ventas</option>
-                  <option value="false">Sin ventas</option>
-                </select>
-              </div>
-              <div class="flex items-center gap-2">
-                <label class="text-gray-500 text-sm">Envío:</label>
-                <select id="inv-filter-shipping" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                  <option value="">Todos</option>
-                  <option value="true">Gratis</option>
-                  <option value="false">Con costo</option>
-                </select>
-              </div>
-              <div class="flex items-center gap-2">
-                <label class="text-gray-500 text-sm">Fulfillment:</label>
-                <select id="inv-filter-fulfillment" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                  <option value="">Todos</option>
-                  <option value="true">Sí</option>
-                  <option value="false">No</option>
-                </select>
-              </div>
+              <select id="inv-filter-status" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm"><option value="">Estado: Todos</option><option value="active">Activos</option><option value="paused">Pausados</option></select>
+              <select id="inv-filter-stock" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm"><option value="">Stock: Todos</option><option value="true">Con stock</option><option value="false">Sin stock</option></select>
+              <select id="inv-filter-sales" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm"><option value="">Ventas: Todos</option><option value="true">Con ventas</option><option value="false">Sin ventas</option></select>
               <div class="flex-1"></div>
-              <input type="text" id="inv-search" oninput="applyInventoryFilters()" placeholder="Buscar producto..." class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-1.5 text-sm w-64">
-              <button onclick="clearInventoryFilters()" class="text-gray-400 hover:text-white text-sm">Limpiar filtros</button>
+              <input type="text" id="inv-search" oninput="applyInventoryFilters()" placeholder="Buscar..." class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-1.5 text-sm w-64">
             </div>
           </div>
-          
-          <!-- Products Table -->
           <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-gray-500 text-sm">Mostrando <span id="inv-showing">0</span> de <span id="inv-filtered">0</span> productos</span>
+              <span class="text-gray-500 text-sm">Mostrando <span id="inv-showing">0</span> de <span id="inv-filtered">0</span></span>
               <select id="inv-sort" onchange="applyInventoryFilters()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
-                <option value="sold_quantity_desc">Más vendidos ↓</option>
-                <option value="sold_quantity_asc">Menos vendidos ↑</option>
-                <option value="price_desc">Mayor precio ↓</option>
-                <option value="price_asc">Menor precio ↑</option>
-                <option value="available_quantity_desc">Mayor stock ↓</option>
-                <option value="available_quantity_asc">Menor stock ↑</option>
-                <option value="title_asc">Nombre A-Z</option>
-                <option value="title_desc">Nombre Z-A</option>
+                <option value="sold_quantity_desc">Más vendidos ↓</option><option value="price_desc">Mayor precio ↓</option><option value="available_quantity_desc">Mayor stock ↓</option><option value="title_asc">Nombre A-Z</option>
               </select>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="text-gray-500 border-b border-[#2e2e2e]">
-                    <th class="text-left pb-3 w-12"></th>
-                    <th class="text-left pb-3">Producto</th>
-                    <th class="text-center pb-3">Estado</th>
-                    <th class="text-right pb-3">Precio</th>
-                    <th class="text-right pb-3">Stock</th>
-                    <th class="text-right pb-3">Vendidos</th>
-                    <th class="text-center pb-3">Envío</th>
-                    <th class="text-center pb-3">Tipo</th>
-                    <th class="text-center pb-3 w-20">Link</th>
-                  </tr>
-                </thead>
-                <tbody id="inv-table"></tbody>
-              </table>
-            </div>
+            <table class="w-full text-sm"><thead><tr class="text-gray-500 border-b border-[#2e2e2e]"><th class="text-left pb-3 w-12"></th><th class="text-left pb-3">Producto</th><th class="text-center pb-3">Estado</th><th class="text-right pb-3">Precio</th><th class="text-right pb-3">Stock</th><th class="text-right pb-3">Vendidos</th><th class="text-center pb-3">Link</th></tr></thead><tbody id="inv-table"></tbody></table>
             <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#2e2e2e]">
-              <button onclick="prevInventoryPage()" id="inv-prev-btn" class="px-4 py-2 bg-[#242424] rounded-lg hover:bg-[#2e2e2e] disabled:opacity-50" disabled>← Anterior</button>
+              <button onclick="prevInventoryPage()" id="inv-prev-btn" class="px-4 py-2 bg-[#242424] rounded-lg disabled:opacity-50" disabled>← Anterior</button>
               <span class="text-gray-500 text-sm">Página <span id="inv-current-page">1</span> de <span id="inv-total-pages">1</span></span>
-              <button onclick="nextInventoryPage()" id="inv-next-btn" class="px-4 py-2 bg-[#242424] rounded-lg hover:bg-[#2e2e2e] disabled:opacity-50">Siguiente →</button>
+              <button onclick="nextInventoryPage()" id="inv-next-btn" class="px-4 py-2 bg-[#242424] rounded-lg disabled:opacity-50">Siguiente →</button>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <!-- PRODUCTO DETALLE -->
-      <div id="view-producto-detalle" class="view hidden">
-        <header class="bg-[#121212] border-b border-[#2e2e2e] px-6 py-4 sticky top-0 z-20">
-          <div class="flex items-center justify-between">
-            <div><div class="flex items-center gap-2 mb-1"><button onclick="navigateTo('ml-productos')" class="text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-5 h-5"></i></button><h2 class="text-xl font-bold" id="producto-titulo">Producto</h2></div><p class="text-gray-500" id="producto-subtitle">Detalle de ventas</p></div>
-            <div class="flex items-center gap-4">
-              <button class="date-picker-trigger flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
-                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
-                <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-              </button>
-              <button onclick="reloadProductDetail()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
-            </div>
-          </div>
-        </header>
-        <div class="p-6 space-y-6">
-          <div class="grid grid-cols-5 gap-4">
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><span class="text-gray-500 text-sm">Unidades</span><p class="text-2xl font-bold mt-1" id="pd-units">0</p></div>
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><span class="text-gray-500 text-sm">Ingresos</span><p class="text-2xl font-bold mt-1 text-green-500" id="pd-revenue">$0</p></div>
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><span class="text-gray-500 text-sm">Envíos</span><p class="text-2xl font-bold mt-1 text-orange-500" id="pd-shipping">-$0</p></div>
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><span class="text-gray-500 text-sm">Fees</span><p class="text-2xl font-bold mt-1 text-red-500" id="pd-fees">-$0</p></div>
-            <div class="bg-green-500/10 rounded-xl p-5 border border-green-500/30"><span class="text-gray-500 text-sm">Neto</span><p class="text-2xl font-bold mt-1 text-green-400" id="pd-net">$0</p></div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><h3 class="font-semibold mb-4">Ventas por Día</h3><canvas id="productSalesChart" height="200"></canvas></div>
-            <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><h3 class="font-semibold mb-4">Resumen</h3><div class="space-y-3 text-sm"><div class="flex justify-between"><span class="text-gray-500">Precio promedio</span><span class="font-medium" id="pd-avg-price">$0</span></div><div class="flex justify-between"><span class="text-gray-500">Total órdenes</span><span class="font-medium" id="pd-orders-count">0</span></div><div class="flex justify-between"><span class="text-gray-500">Margen neto</span><span class="font-medium text-green-500" id="pd-margin">0%</span></div></div></div>
-          </div>
-          <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]"><h3 class="font-semibold mb-4">Últimas Órdenes</h3><table class="w-full text-sm"><thead><tr class="text-gray-500 border-b border-[#2e2e2e]"><th class="text-left pb-3">Fecha</th><th class="text-left pb-3">Comprador</th><th class="text-right pb-3">Cantidad</th><th class="text-right pb-3">Precio Unit.</th><th class="text-right pb-3">Total</th></tr></thead><tbody id="pd-orders"></tbody></table></div>
         </div>
       </div>
       
@@ -405,50 +455,23 @@
   <script>
     const API_BASE = 'https://mercado-libre-production-b0cc.up.railway.app/api/v1';
     const CHANNEL_ID = 1;
-    let salesChart = null, statusChart = null, productSalesChart = null;
+    let salesChart = null, statusChart = null;
     let allProducts = [], filteredProducts = [], currentPage = 1;
     const productsPerPage = 20;
     let currentView = 'dashboard';
-    let currentProductTitle = '';
     let mlMenuOpen = false;
-    
-    // Inventory state
-    let inventoryProducts = [];
-    let inventoryPage = 1;
+    let inventoryProducts = [], inventoryPage = 1;
     const inventoryPerPage = 25;
-    let inventoryStats = {};
     
-    // Date state - ALWAYS initialized
-    const today = new Date();
-    today.setHours(12, 0, 0, 0);
+    const today = new Date(); today.setHours(12, 0, 0, 0);
     let currentMonth = new Date(today);
-    let dateStart = new Date(today);
-    dateStart.setDate(dateStart.getDate() - 30);
+    let dateStart = new Date(today); dateStart.setDate(dateStart.getDate() - 30);
     let dateEnd = new Date(today);
-    let tempStart = null;
-    let tempEnd = null;
+    let tempStart = null, tempEnd = null;
     
-    // Helper: format date as YYYY-MM-DD for API
-    function formatDateForAPI(d) {
-      if (!d) return null;
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    
-    // Build date params for API calls
-    function getDateParams() {
-      const dateFromStr = formatDateForAPI(dateStart);
-      const dateToStr = formatDateForAPI(dateEnd);
-      return `date_from=${dateFromStr}&date_to=${dateToStr}`;
-    }
-    
-    function toggleMLMenu() { 
-      mlMenuOpen = !mlMenuOpen; 
-      document.getElementById('ml-submenu').classList.toggle('hidden', !mlMenuOpen); 
-      document.getElementById('ml-chevron').style.transform = mlMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)'; 
-    }
+    function formatDateForAPI(d) { if (!d) return null; return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function getDateParams() { return `date_from=${formatDateForAPI(dateStart)}&date_to=${formatDateForAPI(dateEnd)}`; }
+    function toggleMLMenu() { mlMenuOpen = !mlMenuOpen; document.getElementById('ml-submenu').classList.toggle('hidden', !mlMenuOpen); document.getElementById('ml-chevron').style.transform = mlMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)'; }
     
     function navigateTo(view) {
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
@@ -456,12 +479,8 @@
       document.querySelectorAll('.nav-item, .sub-nav-item').forEach(n => n.classList.remove('active'));
       currentView = view;
       if (view === 'dashboard') document.getElementById('nav-dashboard').classList.add('active');
-      else if (view.startsWith('ml-') || view === 'producto-detalle') {
-        document.getElementById('nav-ml').classList.add('active');
-        const navEl = document.getElementById('nav-' + view);
-        if (navEl) navEl.classList.add('active');
-        if (!mlMenuOpen) toggleMLMenu();
-      }
+      else if (view === 'admin') document.getElementById('nav-admin').classList.add('active');
+      else if (view.startsWith('ml-')) { document.getElementById('nav-ml').classList.add('active'); const n = document.getElementById('nav-' + view); if (n) n.classList.add('active'); if (!mlMenuOpen) toggleMLMenu(); }
       closeDatePicker();
       loadCurrentView();
       lucide.createIcons();
@@ -470,256 +489,223 @@
     function loadCurrentView() {
       updateDateLabels();
       if (currentView === 'dashboard') loadDashboard();
+      else if (currentView === 'admin') loadAdminStatus();
       else if (currentView === 'ml-resumen') loadMLResumen();
       else if (currentView === 'ml-cuenta1') loadMLCuenta1();
       else if (currentView === 'ml-productos') loadMLProductos();
       else if (currentView === 'ml-inventario') loadMLInventario();
-      else if (currentView === 'producto-detalle' && currentProductTitle) reloadProductDetail();
     }
     
-    function formatDateLabel(d) {
-      if (!d) return '---';
-      return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
+    function formatDateLabel(d) { if (!d) return '---'; return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    function updateDateLabels() { const label = `${formatDateLabel(dateStart)} - ${formatDateLabel(dateEnd)}`; document.querySelectorAll('.dateRangeLabelSync').forEach(el => el.textContent = label); }
     
-    function updateDateLabels() {
-      const label = `${formatDateLabel(dateStart)} - ${formatDateLabel(dateEnd)}`;
-      document.querySelectorAll('.dateRangeLabelSync').forEach(el => el.textContent = label);
-    }
-    
-    // Date Picker Logic
     function initDatePicker() {
       const dropdown = document.getElementById('datePickerDropdown');
-      const prevBtn = document.getElementById('prevMonthBtn');
-      const nextBtn = document.getElementById('nextMonthBtn');
-      const applyBtn = document.getElementById('applyDateBtn');
-      
-      prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        currentMonth.setMonth(currentMonth.getMonth() - 1);
-        renderCalendar();
-      });
-      
-      nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        currentMonth.setMonth(currentMonth.getMonth() + 1);
-        renderCalendar();
-      });
-      
-      applyBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (tempStart && tempEnd) {
-          dateStart = new Date(tempStart);
-          dateEnd = new Date(tempEnd);
-          closeDatePicker();
-          loadCurrentView();
-        }
-      });
-      
-      // Quick range buttons
-      document.querySelectorAll('.quick-range').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const days = btn.dataset.days;
-          tempEnd = new Date(today);
-          if (days === 'all') {
-            tempStart = new Date(2020, 0, 1);
-          } else {
-            tempStart = new Date(today);
-            tempStart.setDate(tempStart.getDate() - parseInt(days));
-          }
-          renderCalendar();
-        });
-      });
-      
-      // Date picker triggers - open dropdown positioned near the button
-      document.querySelectorAll('.date-picker-trigger').forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const rect = trigger.getBoundingClientRect();
-          dropdown.style.top = (rect.bottom + 8) + 'px';
-          dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-          dropdown.classList.toggle('hidden');
-          if (!dropdown.classList.contains('hidden')) {
-            tempStart = dateStart ? new Date(dateStart) : null;
-            tempEnd = dateEnd ? new Date(dateEnd) : null;
-            renderCalendar();
-          }
-        });
-      });
-      
-      // Close on outside click
-      document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && !e.target.closest('.date-picker-trigger')) {
-          dropdown.classList.add('hidden');
-        }
-      });
+      document.getElementById('prevMonthBtn').addEventListener('click', (e) => { e.stopPropagation(); currentMonth.setMonth(currentMonth.getMonth() - 1); renderCalendar(); });
+      document.getElementById('nextMonthBtn').addEventListener('click', (e) => { e.stopPropagation(); currentMonth.setMonth(currentMonth.getMonth() + 1); renderCalendar(); });
+      document.getElementById('applyDateBtn').addEventListener('click', (e) => { e.stopPropagation(); if (tempStart && tempEnd) { dateStart = new Date(tempStart); dateEnd = new Date(tempEnd); closeDatePicker(); loadCurrentView(); } });
+      document.querySelectorAll('.quick-range').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const days = btn.dataset.days; tempEnd = new Date(today); tempStart = days === 'all' ? new Date(2020, 0, 1) : new Date(today); if (days !== 'all') tempStart.setDate(tempStart.getDate() - parseInt(days)); renderCalendar(); }); });
+      document.querySelectorAll('.date-picker-trigger').forEach(trigger => { trigger.addEventListener('click', (e) => { e.stopPropagation(); const rect = trigger.getBoundingClientRect(); dropdown.style.top = (rect.bottom + 8) + 'px'; dropdown.style.right = (window.innerWidth - rect.right) + 'px'; dropdown.classList.toggle('hidden'); if (!dropdown.classList.contains('hidden')) { tempStart = dateStart ? new Date(dateStart) : null; tempEnd = dateEnd ? new Date(dateEnd) : null; renderCalendar(); } }); });
+      document.addEventListener('click', (e) => { if (!dropdown.contains(e.target) && !e.target.closest('.date-picker-trigger')) dropdown.classList.add('hidden'); });
     }
     
-    function closeDatePicker() {
-      document.getElementById('datePickerDropdown').classList.add('hidden');
-    }
+    function closeDatePicker() { document.getElementById('datePickerDropdown').classList.add('hidden'); }
     
     function renderCalendar() {
       const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
       document.getElementById('calendarMonth').textContent = `${months[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
-      
       const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-      let startOffset = firstDay.getDay() - 1;
-      if (startOffset < 0) startOffset = 6;
-      
-      const container = document.getElementById('calendarDays');
-      container.innerHTML = '';
-      
-      // Empty cells
-      for (let i = 0; i < startOffset; i++) {
-        container.innerHTML += '<div class="py-2"></div>';
-      }
-      
-      // Day cells
+      let startOffset = firstDay.getDay() - 1; if (startOffset < 0) startOffset = 6;
+      const container = document.getElementById('calendarDays'); container.innerHTML = '';
+      for (let i = 0; i < startOffset; i++) container.innerHTML += '<div class="py-2"></div>';
       for (let d = 1; d <= lastDay.getDate(); d++) {
         const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d, 12, 0, 0);
-        const isFuture = date > today;
-        const isStart = tempStart && isSameDay(date, tempStart);
-        const isEnd = tempEnd && isSameDay(date, tempEnd);
-        const isInRange = tempStart && tempEnd && date > tempStart && date < tempEnd;
-        const isSingle = isStart && isEnd;
-        
+        const isFuture = date > today, isStart = tempStart && isSameDay(date, tempStart), isEnd = tempEnd && isSameDay(date, tempEnd);
+        const isInRange = tempStart && tempEnd && date > tempStart && date < tempEnd, isSingle = isStart && isEnd;
         let cls = 'py-2 cursor-pointer transition ';
-        if (isFuture) {
-          cls += 'text-gray-600 cursor-not-allowed';
-        } else if (isSingle) {
-          cls += 'date-single';
-        } else if (isStart) {
-          cls += 'date-start';
-        } else if (isEnd) {
-          cls += 'date-end';
-        } else if (isInRange) {
-          cls += 'date-middle';
-        } else {
-          cls += 'hover:bg-[#242424] rounded-lg';
-        }
-        
+        if (isFuture) cls += 'text-gray-600 cursor-not-allowed';
+        else if (isSingle) cls += 'date-single';
+        else if (isStart) cls += 'date-start';
+        else if (isEnd) cls += 'date-end';
+        else if (isInRange) cls += 'date-middle';
+        else cls += 'hover:bg-[#242424] rounded-lg';
         const dateStr = date.toISOString().split('T')[0];
-        if (isFuture) {
-          container.innerHTML += `<div class="${cls}">${d}</div>`;
-        } else {
-          container.innerHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
-        }
+        container.innerHTML += isFuture ? `<div class="${cls}">${d}</div>` : `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
       }
-      
-      // Add click handlers
-      container.querySelectorAll('[data-date]').forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectDate(el.dataset.date);
-        });
-      });
-      
-      // Update selected text
-      updateSelectedText();
+      container.querySelectorAll('[data-date]').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); selectDate(el.dataset.date); }));
+      document.getElementById('selectedRangeText').textContent = tempStart && tempEnd ? `${formatDateLabel(tempStart)} - ${formatDateLabel(tempEnd)}` : tempStart ? `${formatDateLabel(tempStart)} - selecciona fin` : 'Selecciona inicio y fin';
       lucide.createIcons();
     }
     
-    function isSameDay(a, b) {
-      return a.getFullYear() === b.getFullYear() && 
-             a.getMonth() === b.getMonth() && 
-             a.getDate() === b.getDate();
-    }
+    function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+    function selectDate(dateStr) { const clicked = new Date(dateStr + 'T12:00:00'); if (!tempStart || (tempStart && tempEnd)) { tempStart = clicked; tempEnd = null; } else { if (clicked < tempStart) { tempEnd = tempStart; tempStart = clicked; } else { tempEnd = clicked; } } renderCalendar(); }
     
-    function selectDate(dateStr) {
-      const clicked = new Date(dateStr + 'T12:00:00');
-      
-      if (!tempStart || (tempStart && tempEnd)) {
-        // Start new selection
-        tempStart = clicked;
-        tempEnd = null;
-      } else {
-        // Complete selection
-        if (clicked < tempStart) {
-          tempEnd = tempStart;
-          tempStart = clicked;
-        } else {
-          tempEnd = clicked;
-        }
-      }
-      renderCalendar();
-    }
+    function formatCOP(v) { if (v >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M'; if (v >= 1000) return '$' + (v / 1000).toFixed(0) + 'K'; return '$' + Math.round(v).toLocaleString('es-CO'); }
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }); }
+    function showLoading() { document.getElementById('loadingState').classList.remove('hidden'); document.getElementById('errorState').classList.add('hidden'); document.getElementById('dashboardContent').classList.add('hidden'); }
+    function showError(m) { document.getElementById('loadingState').classList.add('hidden'); document.getElementById('errorState').classList.remove('hidden'); document.getElementById('dashboardContent').classList.add('hidden'); document.getElementById('errorMessage').textContent = m; }
+    function showContent() { document.getElementById('loadingState').classList.add('hidden'); document.getElementById('errorState').classList.add('hidden'); document.getElementById('dashboardContent').classList.remove('hidden'); }
+    async function fetchAPI(e) { const r = await fetch(`${API_BASE}${e}`); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
     
-    function updateSelectedText() {
-      const el = document.getElementById('selectedRangeText');
-      if (tempStart && tempEnd) {
-        el.textContent = `${formatDateLabel(tempStart)} - ${formatDateLabel(tempEnd)}`;
-      } else if (tempStart) {
-        el.textContent = `${formatDateLabel(tempStart)} - selecciona fin`;
-      } else {
-        el.textContent = 'Selecciona inicio y fin';
-      }
-    }
+    // ==================
+    // ADMIN FUNCTIONS
+    // ==================
     
-    function formatCOP(v) { 
-      if (v >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M'; 
-      if (v >= 1000) return '$' + (v / 1000).toFixed(0) + 'K'; 
-      return '$' + Math.round(v).toLocaleString('es-CO'); 
-    }
-    
-    function formatDate(d) { 
-      if (!d) return '-'; 
-      return new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }); 
-    }
-    
-    function showLoading() { 
-      document.getElementById('loadingState').classList.remove('hidden'); 
-      document.getElementById('errorState').classList.add('hidden'); 
-      document.getElementById('dashboardContent').classList.add('hidden'); 
-    }
-    
-    function showError(m) { 
-      document.getElementById('loadingState').classList.add('hidden'); 
-      document.getElementById('errorState').classList.remove('hidden'); 
-      document.getElementById('dashboardContent').classList.add('hidden'); 
-      document.getElementById('errorMessage').textContent = m; 
-    }
-    
-    function showContent() { 
-      document.getElementById('loadingState').classList.add('hidden'); 
-      document.getElementById('errorState').classList.add('hidden'); 
-      document.getElementById('dashboardContent').classList.remove('hidden'); 
-    }
-    
-    async function fetchAPI(e) { 
-      const r = await fetch(`${API_BASE}${e}`); 
-      if (!r.ok) throw new Error(`HTTP ${r.status}`); 
-      return r.json(); 
-    }
-    
-    async function loadSyncStatus() {
+    async function loadAdminStatus() {
       try {
-        const [s, d] = await Promise.all([
-          fetchAPI(`/ml/sync/status?channel_id=${CHANNEL_ID}`), 
-          fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`)
-        ]);
-        const e = document.getElementById('syncStatus');
-        const t = d.total_orders || 0;
-        if (s.status === 'running') {
-          e.innerHTML = `<div class="flex items-center gap-2 text-sm text-ml mb-2"><i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>Sincronizando...</div><div class="w-full bg-[#2e2e2e] rounded-full h-2"><div class="bg-ml h-2 rounded-full" style="width:${s.progress_percent}%"></div></div><p class="text-xs text-gray-500 mt-1">${s.processed_orders?.toLocaleString()} / ${s.total_orders?.toLocaleString()}</p>`;
-        } else {
-          e.innerHTML = `<div class="flex items-center gap-2 text-sm text-shopify"><i data-lucide="check-circle" class="w-4 h-4"></i>Datos listos</div><p class="text-xs text-gray-500 mt-1">${t.toLocaleString()} órdenes</p>`;
+        const data = await fetchAPI('/admin/channels-status');
+        const channels = data.channels || [];
+        
+        // Update status cards
+        const mlChannels = channels.filter(c => c.type.includes('MERCADO'));
+        const dropiChannel = channels.find(c => c.type.includes('DROPI'));
+        const shopifyChannel = channels.find(c => c.type.includes('SHOPIFY'));
+        const metaChannel = channels.find(c => c.type.includes('CHATEAPRO') || c.type.includes('META'));
+        
+        const mlConnected = mlChannels.filter(c => c.has_credentials).length;
+        document.getElementById('status-ml').innerHTML = `<span class="${mlConnected > 0 ? 'text-green-500' : 'text-gray-500'}">${mlConnected}/${mlChannels.length} conectadas</span>`;
+        document.getElementById('status-dropi').innerHTML = dropiChannel?.has_credentials ? '<span class="text-green-500">✓ Conectado</span>' : '<span class="text-yellow-500">⏳ Pendiente</span>';
+        document.getElementById('status-shopify').innerHTML = shopifyChannel?.has_credentials ? '<span class="text-green-500">✓ Conectado</span>' : '<span class="text-yellow-500">⏳ Pendiente</span>';
+        document.getElementById('status-meta').innerHTML = metaChannel?.has_credentials ? '<span class="text-green-500">✓ Conectado</span>' : '<span class="text-yellow-500">⏳ Pendiente</span>';
+        
+        // Update ML accounts list
+        document.getElementById('ml-accounts-list').innerHTML = mlChannels.map(c => `
+          <div class="flex items-center justify-between p-3 rounded-lg ${c.has_credentials ? 'bg-green-500/10 border border-green-500/30' : 'bg-[#242424]'}">
+            <div>
+              <p class="font-medium">${c.name}</p>
+              <p class="text-xs text-gray-500">ID: ${c.external_id || 'Sin conectar'}</p>
+            </div>
+            <span class="text-xs px-2 py-1 rounded ${c.has_credentials ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}">${c.has_credentials ? '✓ Conectado' : 'Pendiente'}</span>
+          </div>
+        `).join('');
+        
+        // Update Dropi status
+        if (dropiChannel?.has_credentials) {
+          document.getElementById('dropi-status').innerHTML = '<span class="text-green-500 text-sm">✓ Conectado</span>';
+          document.getElementById('dropi-form').classList.add('hidden');
         }
+        
+        // Update Shopify status
+        if (shopifyChannel?.has_credentials) {
+          document.getElementById('shopify-status').innerHTML = '<span class="text-green-500 text-sm">✓ Conectado</span>';
+          document.getElementById('shopify-form').classList.add('hidden');
+        }
+        
+        // Update Meta status
+        if (metaChannel?.has_credentials) {
+          document.getElementById('meta-status').innerHTML = '<span class="text-green-500 text-sm">✓ Conectado</span>';
+          document.getElementById('meta-connect-btn').textContent = 'Reconectar';
+        }
+        
+        // Update channels table
+        document.getElementById('channels-table').innerHTML = channels.map(c => `
+          <tr class="border-b border-[#2e2e2e]">
+            <td class="py-3">${c.id}</td>
+            <td class="py-3 font-medium">${c.name}</td>
+            <td class="py-3"><span class="text-xs px-2 py-1 rounded bg-[#242424]">${c.type}</span></td>
+            <td class="py-3 text-gray-400">${c.external_id || '-'}</td>
+            <td class="py-3 text-center">${c.has_credentials ? '<span class="text-green-500">✓</span>' : '<span class="text-gray-500">-</span>'}</td>
+            <td class="py-3 text-center">${c.status}</td>
+          </tr>
+        `).join('');
+        
         lucide.createIcons();
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error('Error loading admin status:', e);
+      }
     }
+    
+    function connectML(channelId) {
+      const url = `${API_BASE}/oauth/ml/authorize?channel_id=${channelId}`;
+      window.open(url, '_blank');
+      alert(`Se abrió una ventana para autorizar la cuenta ML #${channelId}.\n\nDespués de autorizar, copia el JSON con los tokens y pégalo aquí para guardarlos.`);
+    }
+    
+    async function connectDropi(event) {
+      event.preventDefault();
+      const email = document.getElementById('dropi-email').value;
+      const password = document.getElementById('dropi-password').value;
+      const btn = document.getElementById('dropi-submit');
+      
+      btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>Conectando...';
+      btn.disabled = true;
+      
+      try {
+        const response = await fetch(`${API_BASE}/dropi/auth/login?channel_id=4`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          alert('✅ Dropi conectado exitosamente!');
+          loadAdminStatus();
+        } else {
+          alert('❌ Error: ' + (data.detail || data.error || 'Credenciales inválidas'));
+        }
+      } catch (e) {
+        alert('❌ Error de conexión: ' + e.message);
+      }
+      
+      btn.innerHTML = '<i data-lucide="plug" class="w-4 h-4"></i>Conectar Dropi';
+      btn.disabled = false;
+      lucide.createIcons();
+    }
+    
+    async function connectShopify(event) {
+      event.preventDefault();
+      const shopUrl = document.getElementById('shopify-url').value;
+      const accessToken = document.getElementById('shopify-token').value;
+      const btn = document.getElementById('shopify-submit');
+      
+      btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>Conectando...';
+      btn.disabled = true;
+      
+      try {
+        const response = await fetch(`${API_BASE}/shopify/auth/connect?channel_id=5`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop_url: shopUrl, access_token: accessToken })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          alert('✅ Shopify conectado exitosamente!');
+          loadAdminStatus();
+        } else {
+          alert('❌ Error: ' + (data.detail || data.error || 'Token inválido'));
+        }
+      } catch (e) {
+        alert('❌ Error de conexión: ' + e.message);
+      }
+      
+      btn.innerHTML = '<i data-lucide="plug" class="w-4 h-4"></i>Conectar Shopify';
+      btn.disabled = false;
+      lucide.createIcons();
+    }
+    
+    function connectMeta() {
+      const url = `${API_BASE}/meta/auth/url?channel_id=6`;
+      window.open(url, '_blank');
+      alert('Se abrió una ventana para conectar con Meta.\n\nDespués de autorizar, los datos se sincronizarán automáticamente.');
+    }
+    
+    // ==================
+    // OTHER FUNCTIONS
+    // ==================
+    
+    async function loadSyncStatus() { try { const [s, d] = await Promise.all([fetchAPI(`/ml/sync/status?channel_id=${CHANNEL_ID}`), fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`)]); const e = document.getElementById('syncStatus'); const t = d.total_orders || 0; if (s.status === 'running') { e.innerHTML = `<div class="flex items-center gap-2 text-sm text-ml mb-2"><i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>Sincronizando...</div><div class="w-full bg-[#2e2e2e] rounded-full h-2"><div class="bg-ml h-2 rounded-full" style="width:${s.progress_percent}%"></div></div><p class="text-xs text-gray-500 mt-1">${s.processed_orders?.toLocaleString()} / ${s.total_orders?.toLocaleString()}</p>`; } else { e.innerHTML = `<div class="flex items-center gap-2 text-sm text-shopify"><i data-lucide="check-circle" class="w-4 h-4"></i>Datos listos</div><p class="text-xs text-gray-500 mt-1">${t.toLocaleString()} órdenes</p>`; } lucide.createIcons(); } catch (e) { console.error(e); } }
     
     async function loadDashboard() {
       showLoading();
       try {
         const dateParams = getDateParams();
         await loadSyncStatus();
-        const [dashboard, stats] = await Promise.all([
-          fetchAPI(`/ml/analytics/dashboard?channel_id=${CHANNEL_ID}&${dateParams}`), 
-          fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`)
-        ]);
+        const [dashboard, stats] = await Promise.all([fetchAPI(`/ml/analytics/dashboard?channel_id=${CHANNEL_ID}&${dateParams}`), fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`)]);
         const m = dashboard.metrics;
         document.getElementById('totalRevenue').textContent = m.total_revenue.formatted;
         document.getElementById('totalOrders').textContent = m.total_orders.value.toLocaleString();
@@ -730,361 +716,45 @@
         document.getElementById('revenueChange').className = 'text-sm mt-1 font-medium ' + (rc >= 0 ? 'text-shopify' : 'text-gastos');
         document.getElementById('ordersChange').textContent = (oc >= 0 ? '↑ ' : '↓ ') + Math.abs(oc) + '%';
         document.getElementById('ordersChange').className = 'text-sm mt-1 font-medium ' + (oc >= 0 ? 'text-shopify' : 'text-gastos');
-        
         const salesData = await fetchAPI(`/ml/analytics/sales-by-day?channel_id=${CHANNEL_ID}&${dateParams}`);
         const ctx1 = document.getElementById('salesChart').getContext('2d');
         if (salesChart) salesChart.destroy();
         salesChart = new Chart(ctx1, { type: 'line', data: { labels: salesData.data.map(x => formatDate(x.date)), datasets: [{ data: salesData.data.map(x => x.revenue / 1000000), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', tension: 0.4, fill: true, pointRadius: 2 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#2e2e2e' }, ticks: { color: '#888', maxTicksLimit: 10 } }, y: { grid: { color: '#2e2e2e' }, ticks: { color: '#888', callback: v => '$' + v + 'M' } } } } });
-        
         const statusData = await fetchAPI(`/ml/analytics/orders-by-status?channel_id=${CHANNEL_ID}&${dateParams}`);
         const colors = { 'paid': '#22c55e', 'cancelled': '#ef4444', 'pending': '#eab308', 'partially_refunded': '#f97316' };
         const ctx2 = document.getElementById('statusChart').getContext('2d');
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctx2, { type: 'doughnut', data: { labels: statusData.statuses.map(s => s.status), datasets: [{ data: statusData.statuses.map(s => s.count), backgroundColor: statusData.statuses.map(s => colors[s.status] || '#6b7280'), borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { display: false } }, cutout: '70%' } });
         document.getElementById('statusLegend').innerHTML = statusData.statuses.map(s => `<div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:${colors[s.status] || '#6b7280'}"></span>${s.status}</span><span class="font-medium">${s.count}</span></div>`).join('');
-        
         const prods = await fetchAPI(`/ml/analytics/top-products?channel_id=${CHANNEL_ID}&${dateParams}&limit=10`);
-        document.getElementById('productsTable').innerHTML = prods.products?.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424] cursor-pointer" onclick="showProductDetail('${encodeURIComponent(p.title)}')"><td class="py-3 text-gray-500">${i + 1}</td><td class="py-3 font-medium">${p.title}</td><td class="py-3 text-right">${p.units_sold.toLocaleString()}</td><td class="py-3 text-right font-bold text-shopify">${formatCOP(p.revenue)}</td><td class="py-3 text-right text-gray-400">${p.orders_count}</td></tr>`).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Sin datos</td></tr>';
-        
+        document.getElementById('productsTable').innerHTML = prods.products?.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424]"><td class="py-3 text-gray-500">${i + 1}</td><td class="py-3 font-medium">${p.title}</td><td class="py-3 text-right">${p.units_sold.toLocaleString()}</td><td class="py-3 text-right font-bold text-shopify">${formatCOP(p.revenue)}</td><td class="py-3 text-right text-gray-400">${p.orders_count}</td></tr>`).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Sin datos</td></tr>';
         showContent();
         lucide.createIcons();
       } catch (e) { console.error(e); showError(e.message); }
     }
     
-    async function loadMLResumen() {
-      try {
-        const dateParams = getDateParams();
-        const [stats, fin] = await Promise.all([
-          fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`), 
-          fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&${dateParams}`)
-        ]);
-        document.getElementById('ml-cuenta1-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0);
-        document.getElementById('ml-cuenta1-orders').textContent = (fin.orders_count || 0).toLocaleString() + ' órdenes';
-        document.getElementById('ml-total-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0);
-        document.getElementById('ml-total-orders').textContent = (fin.orders_count || 0).toLocaleString();
-        document.getElementById('ml-total-shipping').textContent = '-' + (fin.formatted?.shipping || '$0');
-        document.getElementById('ml-total-fees').textContent = '-' + (fin.formatted?.fees || '$0');
-        document.getElementById('ml-total-net').textContent = fin.formatted?.net || formatCOP(fin.totals?.net || 0);
-        lucide.createIcons();
-      } catch (e) { console.error(e); }
-    }
+    async function loadMLResumen() { try { const dateParams = getDateParams(); const [stats, fin] = await Promise.all([fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`), fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&${dateParams}`)]); document.getElementById('ml-cuenta1-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0); document.getElementById('ml-cuenta1-orders').textContent = (fin.orders_count || 0).toLocaleString() + ' órdenes'; document.getElementById('ml-total-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0); document.getElementById('ml-total-orders').textContent = (fin.orders_count || 0).toLocaleString(); document.getElementById('ml-total-shipping').textContent = '-' + (fin.formatted?.shipping || '$0'); document.getElementById('ml-total-fees').textContent = '-' + (fin.formatted?.fees || '$0'); document.getElementById('ml-total-net').textContent = fin.formatted?.net || formatCOP(fin.totals?.net || 0); lucide.createIcons(); } catch (e) { console.error(e); } }
     
-    async function loadMLCuenta1() {
-      try {
-        const dateParams = getDateParams();
-        const [stats, fin, prods] = await Promise.all([
-          fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`),
-          fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&${dateParams}`),
-          fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&${dateParams}&limit=15`)
-        ]);
-        document.getElementById('c1-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0);
-        document.getElementById('c1-orders').textContent = (fin.orders_count || 0).toLocaleString();
-        document.getElementById('c1-shipping').textContent = '-' + (fin.formatted?.shipping || '$0');
-        document.getElementById('c1-fees').textContent = '-' + (fin.formatted?.fees || '$0');
-        document.getElementById('c1-net').textContent = fin.formatted?.net || formatCOP(fin.totals?.net || 0);
-        
-        const b = stats.orders_by_status;
-        document.getElementById('c1-status-breakdown').innerHTML = `
-          <div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Pagadas</p><p class="text-xl font-bold text-green-500">${(b.paid || 0).toLocaleString()}</p></div>
-          <div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Canceladas</p><p class="text-xl font-bold text-red-500">${(b.cancelled || 0).toLocaleString()}</p></div>
-          <div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Reembolsos</p><p class="text-xl font-bold text-orange-500">${(b.partially_refunded || 0).toLocaleString()}</p></div>
-          <div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Total</p><p class="text-xl font-bold">${stats.total_orders.toLocaleString()}</p></div>`;
-        
-        document.getElementById('c1-products').innerHTML = prods.products?.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424] cursor-pointer" onclick="showProductDetail('${encodeURIComponent(p.title)}')"><td class="py-2 text-gray-500">${i + 1}</td><td class="py-2">${p.title}</td><td class="py-2 text-right">${p.units_sold.toLocaleString()}</td><td class="py-2 text-right text-green-500">${p.formatted?.revenue || formatCOP(p.revenue)}</td><td class="py-2 text-right text-orange-500">-${p.formatted?.shipping || formatCOP(p.shipping)}</td><td class="py-2 text-right text-red-500">-${p.formatted?.fees || formatCOP(p.fees)}</td><td class="py-2 text-right font-medium text-green-400">${p.formatted?.net || formatCOP(p.net)}</td></tr>`).join('') || '';
-        lucide.createIcons();
-      } catch (e) { console.error(e); }
-    }
+    async function loadMLCuenta1() { try { const dateParams = getDateParams(); const [stats, fin, prods] = await Promise.all([fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`), fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&${dateParams}`), fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&${dateParams}&limit=15`)]); document.getElementById('c1-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0); document.getElementById('c1-orders').textContent = (fin.orders_count || 0).toLocaleString(); document.getElementById('c1-shipping').textContent = '-' + (fin.formatted?.shipping || '$0'); document.getElementById('c1-fees').textContent = '-' + (fin.formatted?.fees || '$0'); document.getElementById('c1-net').textContent = fin.formatted?.net || formatCOP(fin.totals?.net || 0); const b = stats.orders_by_status; document.getElementById('c1-status-breakdown').innerHTML = `<div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Pagadas</p><p class="text-xl font-bold text-green-500">${(b.paid || 0).toLocaleString()}</p></div><div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Canceladas</p><p class="text-xl font-bold text-red-500">${(b.cancelled || 0).toLocaleString()}</p></div><div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Reembolsos</p><p class="text-xl font-bold text-orange-500">${(b.partially_refunded || 0).toLocaleString()}</p></div><div class="bg-[#0a0a0a] rounded-lg p-4 text-center"><p class="text-gray-500 text-sm">Total</p><p class="text-xl font-bold">${stats.total_orders.toLocaleString()}</p></div>`; document.getElementById('c1-products').innerHTML = prods.products?.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424]"><td class="py-2 text-gray-500">${i + 1}</td><td class="py-2">${p.title}</td><td class="py-2 text-right">${p.units_sold.toLocaleString()}</td><td class="py-2 text-right text-green-500">${p.formatted?.revenue || formatCOP(p.revenue)}</td><td class="py-2 text-right text-orange-500">-${p.formatted?.shipping || formatCOP(p.shipping)}</td><td class="py-2 text-right text-red-500">-${p.formatted?.fees || formatCOP(p.fees)}</td><td class="py-2 text-right font-medium text-green-400">${p.formatted?.net || formatCOP(p.net)}</td></tr>`).join('') || ''; lucide.createIcons(); } catch (e) { console.error(e); } }
     
-    async function loadMLProductos() {
-      try {
-        const dateParams = getDateParams();
-        const data = await fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&${dateParams}&limit=500`);
-        allProducts = data.products || [];
-        filteredProducts = [...allProducts];
-        currentPage = 1;
-        sortProducts(); // Apply default sort
-      } catch (e) { console.error(e); }
-    }
+    async function loadMLProductos() { try { const dateParams = getDateParams(); const data = await fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&${dateParams}&limit=500`); allProducts = data.products || []; filteredProducts = [...allProducts]; currentPage = 1; sortProducts(); } catch (e) { console.error(e); } }
     
-    function renderProductsTable() {
-      const s = (currentPage - 1) * productsPerPage, e = s + productsPerPage, pg = filteredProducts.slice(s, e);
-      document.getElementById('products-showing').textContent = Math.min(e, filteredProducts.length);
-      document.getElementById('products-total').textContent = filteredProducts.length;
-      document.getElementById('current-page').textContent = currentPage;
-      document.getElementById('total-pages').textContent = Math.ceil(filteredProducts.length / productsPerPage) || 1;
-      document.getElementById('prev-page-btn').disabled = currentPage === 1;
-      document.getElementById('next-page-btn').disabled = e >= filteredProducts.length;
-      document.getElementById('all-products-table').innerHTML = pg.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424] cursor-pointer" onclick="showProductDetail('${encodeURIComponent(p.title)}')"><td class="py-3 text-gray-500">${s + i + 1}</td><td class="py-3 font-medium">${p.title}</td><td class="py-3 text-right">${p.units_sold.toLocaleString()}</td><td class="py-3 text-right text-green-500">${p.formatted?.revenue || formatCOP(p.revenue)}</td><td class="py-3 text-right text-orange-500">-${p.formatted?.shipping || formatCOP(p.shipping || 0)}</td><td class="py-3 text-right text-red-500">-${p.formatted?.fees || formatCOP(p.fees || 0)}</td><td class="py-3 text-right font-medium text-green-400">${p.formatted?.net || formatCOP(p.net || 0)}</td></tr>`).join('');
-    }
-    
-    function filterProducts() { 
-      const s = document.getElementById('productSearch').value.toLowerCase(); 
-      filteredProducts = allProducts.filter(p => p.title.toLowerCase().includes(s)); 
-      currentPage = 1; 
-      sortProducts();
-    }
-    
-    function sortProducts() { 
-      const sortVal = document.getElementById('productSort').value;
-      const [field, order] = sortVal.split('_');
-      const asc = order === 'asc';
-      
-      filteredProducts.sort((a, b) => {
-        let valA, valB;
-        
-        switch(field) {
-          case 'revenue':
-            valA = a.revenue || 0;
-            valB = b.revenue || 0;
-            break;
-          case 'units':
-            valA = a.units_sold || 0;
-            valB = b.units_sold || 0;
-            break;
-          case 'orders':
-            valA = a.orders_count || 0;
-            valB = b.orders_count || 0;
-            break;
-          case 'name':
-            return asc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
-          case 'net':
-            valA = a.net || 0;
-            valB = b.net || 0;
-            break;
-          default:
-            valA = a.revenue || 0;
-            valB = b.revenue || 0;
-        }
-        
-        return asc ? valA - valB : valB - valA;
-      });
-      
-      currentPage = 1; 
-      renderProductsTable(); 
-    }
-    
+    function renderProductsTable() { const s = (currentPage - 1) * productsPerPage, e = s + productsPerPage, pg = filteredProducts.slice(s, e); document.getElementById('products-showing').textContent = Math.min(e, filteredProducts.length); document.getElementById('products-total').textContent = filteredProducts.length; document.getElementById('current-page').textContent = currentPage; document.getElementById('total-pages').textContent = Math.ceil(filteredProducts.length / productsPerPage) || 1; document.getElementById('prev-page-btn').disabled = currentPage === 1; document.getElementById('next-page-btn').disabled = e >= filteredProducts.length; document.getElementById('all-products-table').innerHTML = pg.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424]"><td class="py-3 text-gray-500">${s + i + 1}</td><td class="py-3 font-medium">${p.title}</td><td class="py-3 text-right">${p.units_sold.toLocaleString()}</td><td class="py-3 text-right text-green-500">${p.formatted?.revenue || formatCOP(p.revenue)}</td><td class="py-3 text-right text-orange-500">-${p.formatted?.shipping || formatCOP(p.shipping || 0)}</td><td class="py-3 text-right text-red-500">-${p.formatted?.fees || formatCOP(p.fees || 0)}</td><td class="py-3 text-right font-medium text-green-400">${p.formatted?.net || formatCOP(p.net || 0)}</td></tr>`).join(''); }
+    function filterProducts() { const s = document.getElementById('productSearch').value.toLowerCase(); filteredProducts = allProducts.filter(p => p.title.toLowerCase().includes(s)); currentPage = 1; sortProducts(); }
+    function sortProducts() { const sortVal = document.getElementById('productSort').value; const [field, order] = sortVal.split('_'); const asc = order === 'asc'; filteredProducts.sort((a, b) => { let valA, valB; switch(field) { case 'revenue': valA = a.revenue || 0; valB = b.revenue || 0; break; case 'units': valA = a.units_sold || 0; valB = b.units_sold || 0; break; case 'name': return asc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title); case 'net': valA = a.net || 0; valB = b.net || 0; break; default: valA = a.revenue || 0; valB = b.revenue || 0; } return asc ? valA - valB : valB - valA; }); currentPage = 1; renderProductsTable(); }
     function prevProductPage() { if (currentPage > 1) { currentPage--; renderProductsTable(); } }
     function nextProductPage() { if (currentPage < Math.ceil(filteredProducts.length / productsPerPage)) { currentPage++; renderProductsTable(); } }
     
-    // ==================
-    // INVENTORY FUNCTIONS
-    // ==================
+    async function loadMLInventario() { try { const stats = await fetchAPI(`/ml/products/stats?channel_id=${CHANNEL_ID}`); document.getElementById('inv-total').textContent = stats.totals?.products || 0; document.getElementById('inv-stock').textContent = (stats.totals?.total_stock || 0).toLocaleString(); const activeStatus = stats.by_status?.find(s => s.status === 'active'); const pausedStatus = stats.by_status?.find(s => s.status === 'paused'); document.getElementById('inv-active').textContent = activeStatus?.count || 0; document.getElementById('inv-paused').textContent = pausedStatus?.count || 0; document.getElementById('inv-with-sales').textContent = stats.highlights?.with_sales || 0; document.getElementById('inv-no-sales').textContent = (stats.totals?.products || 0) - (stats.highlights?.with_sales || 0); await applyInventoryFilters(); lucide.createIcons(); } catch (e) { console.error(e); } }
     
-    async function loadMLInventario() {
-      try {
-        // Load stats first
-        const stats = await fetchAPI(`/ml/products/stats?channel_id=${CHANNEL_ID}`);
-        inventoryStats = stats;
-        
-        // Update stats cards
-        document.getElementById('inv-total').textContent = stats.totals?.products || 0;
-        document.getElementById('inv-stock').textContent = (stats.totals?.total_stock || 0).toLocaleString();
-        
-        // Find active/paused counts
-        const activeStatus = stats.by_status?.find(s => s.status === 'active');
-        const pausedStatus = stats.by_status?.find(s => s.status === 'paused');
-        document.getElementById('inv-active').textContent = activeStatus?.count || 0;
-        document.getElementById('inv-paused').textContent = pausedStatus?.count || 0;
-        
-        document.getElementById('inv-with-sales').textContent = stats.highlights?.with_sales || 0;
-        document.getElementById('inv-no-sales').textContent = (stats.totals?.products || 0) - (stats.highlights?.with_sales || 0);
-        
-        // Load products with current filters
-        await applyInventoryFilters();
-        
-        lucide.createIcons();
-      } catch (e) { 
-        console.error(e); 
-      }
-    }
+    async function applyInventoryFilters() { try { const status = document.getElementById('inv-filter-status').value; const hasStock = document.getElementById('inv-filter-stock').value; const hasSales = document.getElementById('inv-filter-sales').value; const search = document.getElementById('inv-search').value; const sortVal = document.getElementById('inv-sort').value; const [sortBy, sortOrder] = sortVal.split('_'); let url = `/ml/products/list?channel_id=${CHANNEL_ID}&limit=500`; if (status) url += `&status=${status}`; if (hasStock) url += `&has_stock=${hasStock}`; if (hasSales) url += `&has_sales=${hasSales}`; if (search) url += `&search=${encodeURIComponent(search)}`; url += `&sort_by=${sortBy}&sort_order=${sortOrder === 'asc' ? 'asc' : 'desc'}`; const data = await fetchAPI(url); inventoryProducts = data.products || []; inventoryPage = 1; document.getElementById('inv-filtered').textContent = data.total_count || 0; renderInventoryTable(); } catch (e) { console.error(e); } }
     
-    async function applyInventoryFilters() {
-      try {
-        const status = document.getElementById('inv-filter-status').value;
-        const hasStock = document.getElementById('inv-filter-stock').value;
-        const hasSales = document.getElementById('inv-filter-sales').value;
-        const freeShipping = document.getElementById('inv-filter-shipping').value;
-        const fulfillment = document.getElementById('inv-filter-fulfillment').value;
-        const search = document.getElementById('inv-search').value;
-        const sortVal = document.getElementById('inv-sort').value;
-        
-        const [sortBy, sortOrder] = sortVal.split('_');
-        const sortField = sortBy === 'title' ? 'title' : sortBy;
-        
-        let url = `/ml/products/list?channel_id=${CHANNEL_ID}&limit=500`;
-        if (status) url += `&status=${status}`;
-        if (hasStock) url += `&has_stock=${hasStock}`;
-        if (hasSales) url += `&has_sales=${hasSales}`;
-        if (freeShipping) url += `&free_shipping=${freeShipping}`;
-        if (fulfillment) url += `&fulfillment=${fulfillment}`;
-        if (search) url += `&search=${encodeURIComponent(search)}`;
-        url += `&sort_by=${sortField}&sort_order=${sortOrder === 'asc' ? 'asc' : 'desc'}`;
-        
-        const data = await fetchAPI(url);
-        inventoryProducts = data.products || [];
-        inventoryPage = 1;
-        
-        document.getElementById('inv-filtered').textContent = data.total_count || 0;
-        
-        renderInventoryTable();
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    function renderInventoryTable() { const start = (inventoryPage - 1) * inventoryPerPage; const end = start + inventoryPerPage; const pageProducts = inventoryProducts.slice(start, end); document.getElementById('inv-showing').textContent = Math.min(end, inventoryProducts.length); document.getElementById('inv-current-page').textContent = inventoryPage; document.getElementById('inv-total-pages').textContent = Math.ceil(inventoryProducts.length / inventoryPerPage) || 1; document.getElementById('inv-prev-btn').disabled = inventoryPage === 1; document.getElementById('inv-next-btn').disabled = end >= inventoryProducts.length; const statusClass = (s) => s === 'active' ? 'status-active' : s === 'paused' ? 'status-paused' : 'status-closed'; const statusLabel = (s) => s === 'active' ? 'Activo' : s === 'paused' ? 'Pausado' : 'Cerrado'; document.getElementById('inv-table').innerHTML = pageProducts.map(p => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424]"><td class="py-2">${p.thumbnail ? `<img src="${p.thumbnail}" class="w-10 h-10 rounded object-cover" onerror="this.style.display='none'">` : '<div class="w-10 h-10 bg-[#242424] rounded"></div>'}</td><td class="py-2"><div class="font-medium text-sm">${p.title.length > 50 ? p.title.substring(0, 50) + '...' : p.title}</div><div class="text-xs text-gray-500">${p.ml_item_id}</div></td><td class="py-2 text-center"><span class="px-2 py-1 rounded text-xs ${statusClass(p.status)}">${statusLabel(p.status)}</span></td><td class="py-2 text-right font-medium">${formatCOP(p.price)}</td><td class="py-2 text-right ${p.available_quantity === 0 ? 'text-red-500' : ''}">${p.available_quantity.toLocaleString()}</td><td class="py-2 text-right ${p.sold_quantity === 0 ? 'text-gray-500' : 'text-green-500'}">${p.sold_quantity.toLocaleString()}</td><td class="py-2 text-center"><a href="${p.permalink}" target="_blank" class="text-ml hover:underline text-xs">Ver →</a></td></tr>`).join('') || '<tr><td colspan="7" class="py-8 text-center text-gray-500">No se encontraron productos</td></tr>'; }
+    function prevInventoryPage() { if (inventoryPage > 1) { inventoryPage--; renderInventoryTable(); } }
+    function nextInventoryPage() { if (inventoryPage < Math.ceil(inventoryProducts.length / inventoryPerPage)) { inventoryPage++; renderInventoryTable(); } }
+    async function syncMLProducts() { const btn = document.getElementById('syncProductsBtn'); btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>Sincronizando...'; btn.disabled = true; try { const response = await fetch(`${API_BASE}/ml/products/debug/sync-now?channel_id=${CHANNEL_ID}&concurrency=5`, { method: 'POST' }); const result = await response.json(); if (result.success) { alert(`✅ Sync completado!\n\nProcesados: ${result.processed}\nNuevos: ${result.new_items}\nActualizados: ${result.updated_items}`); loadMLInventario(); } else { alert('❌ Error: ' + (result.error || 'Unknown')); } } catch (e) { alert('❌ Error: ' + e.message); } btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4"></i>Sincronizar'; btn.disabled = false; lucide.createIcons(); }
     
-    function clearInventoryFilters() {
-      document.getElementById('inv-filter-status').value = '';
-      document.getElementById('inv-filter-stock').value = '';
-      document.getElementById('inv-filter-sales').value = '';
-      document.getElementById('inv-filter-shipping').value = '';
-      document.getElementById('inv-filter-fulfillment').value = '';
-      document.getElementById('inv-search').value = '';
-      document.getElementById('inv-sort').value = 'sold_quantity_desc';
-      applyInventoryFilters();
-    }
-    
-    function renderInventoryTable() {
-      const start = (inventoryPage - 1) * inventoryPerPage;
-      const end = start + inventoryPerPage;
-      const pageProducts = inventoryProducts.slice(start, end);
-      
-      document.getElementById('inv-showing').textContent = Math.min(end, inventoryProducts.length);
-      document.getElementById('inv-current-page').textContent = inventoryPage;
-      document.getElementById('inv-total-pages').textContent = Math.ceil(inventoryProducts.length / inventoryPerPage) || 1;
-      document.getElementById('inv-prev-btn').disabled = inventoryPage === 1;
-      document.getElementById('inv-next-btn').disabled = end >= inventoryProducts.length;
-      
-      const statusClass = (s) => {
-        if (s === 'active') return 'status-active';
-        if (s === 'paused') return 'status-paused';
-        return 'status-closed';
-      };
-      
-      const statusLabel = (s) => {
-        if (s === 'active') return 'Activo';
-        if (s === 'paused') return 'Pausado';
-        return 'Cerrado';
-      };
-      
-      document.getElementById('inv-table').innerHTML = pageProducts.map(p => `
-        <tr class="border-b border-[#2e2e2e] hover:bg-[#242424]">
-          <td class="py-2">
-            ${p.thumbnail ? `<img src="${p.thumbnail}" class="w-10 h-10 rounded object-cover" onerror="this.style.display='none'">` : '<div class="w-10 h-10 bg-[#242424] rounded"></div>'}
-          </td>
-          <td class="py-2">
-            <div class="font-medium text-sm">${p.title.length > 60 ? p.title.substring(0, 60) + '...' : p.title}</div>
-            <div class="text-xs text-gray-500">${p.ml_item_id}</div>
-          </td>
-          <td class="py-2 text-center">
-            <span class="px-2 py-1 rounded text-xs ${statusClass(p.status)}">${statusLabel(p.status)}</span>
-          </td>
-          <td class="py-2 text-right font-medium">${formatCOP(p.price)}</td>
-          <td class="py-2 text-right ${p.available_quantity === 0 ? 'text-red-500' : ''}">${p.available_quantity.toLocaleString()}</td>
-          <td class="py-2 text-right ${p.sold_quantity === 0 ? 'text-gray-500' : 'text-green-500'}">${p.sold_quantity.toLocaleString()}</td>
-          <td class="py-2 text-center">
-            ${p.free_shipping ? '<span class="text-green-500 text-xs">Gratis</span>' : '<span class="text-gray-500 text-xs">-</span>'}
-          </td>
-          <td class="py-2 text-center">
-            <span class="text-xs ${p.logistic_type === 'fulfillment' ? 'text-purple-400' : 'text-gray-500'}">${p.logistic_type || '-'}</span>
-          </td>
-          <td class="py-2 text-center">
-            <a href="${p.permalink}" target="_blank" class="text-ml hover:underline text-xs">Ver →</a>
-          </td>
-        </tr>
-      `).join('') || '<tr><td colspan="9" class="py-8 text-center text-gray-500">No se encontraron productos</td></tr>';
-    }
-    
-    function prevInventoryPage() {
-      if (inventoryPage > 1) {
-        inventoryPage--;
-        renderInventoryTable();
-      }
-    }
-    
-    function nextInventoryPage() {
-      if (inventoryPage < Math.ceil(inventoryProducts.length / inventoryPerPage)) {
-        inventoryPage++;
-        renderInventoryTable();
-      }
-    }
-    
-    async function syncMLProducts() {
-      const btn = document.getElementById('syncProductsBtn');
-      btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>Sincronizando...';
-      btn.disabled = true;
-      
-      try {
-        const response = await fetch(`${API_BASE}/ml/products/debug/sync-now?channel_id=${CHANNEL_ID}&concurrency=5`, { method: 'POST' });
-        const result = await response.json();
-        
-        if (result.success) {
-          alert(`✅ Sync completado!\n\nProcesados: ${result.processed}\nNuevos: ${result.new_items}\nActualizados: ${result.updated_items}\nFallidos: ${result.failed_items}\n\nDuración: ${result.duration_seconds}s`);
-          loadMLInventario();
-        } else {
-          alert('❌ Error: ' + (result.error || 'Unknown'));
-        }
-      } catch (e) {
-        alert('❌ Error: ' + e.message);
-      }
-      
-      btn.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4"></i>Sincronizar Productos';
-      btn.disabled = false;
-      lucide.createIcons();
-    }
-    
-    async function showProductDetail(titleEncoded) {
-      const title = decodeURIComponent(titleEncoded);
-      currentProductTitle = title;
-      currentView = 'producto-detalle';
-      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-      document.getElementById('view-producto-detalle').classList.remove('hidden');
-      document.getElementById('producto-titulo').textContent = title.length > 50 ? title.substring(0, 50) + '...' : title;
-      document.getElementById('producto-subtitle').textContent = title;
-      updateDateLabels();
-      await loadProductDetailData(title);
-      lucide.createIcons();
-    }
-    
-    async function reloadProductDetail() {
-      if (currentProductTitle) {
-        await loadProductDetailData(currentProductTitle);
-      }
-    }
-    
-    async function loadProductDetailData(title) {
-      try {
-        const dateParams = getDateParams();
-        const data = await fetchAPI(`/ml/product/${encodeURIComponent(title)}?channel_id=${CHANNEL_ID}&${dateParams}`);
-        const s = data.summary;
-        document.getElementById('pd-units').textContent = s.total_units.toLocaleString();
-        document.getElementById('pd-revenue').textContent = data.formatted?.revenue || formatCOP(s.total_revenue);
-        document.getElementById('pd-shipping').textContent = '-' + (data.formatted?.shipping || formatCOP(s.total_shipping));
-        document.getElementById('pd-fees').textContent = '-' + (data.formatted?.fees || formatCOP(s.total_fees));
-        document.getElementById('pd-net').textContent = data.formatted?.net || formatCOP(s.total_net);
-        document.getElementById('pd-avg-price').textContent = formatCOP(s.avg_price);
-        document.getElementById('pd-orders-count').textContent = s.orders_count;
-        const margin = s.total_revenue > 0 ? ((s.total_net / s.total_revenue) * 100).toFixed(1) : 0;
-        document.getElementById('pd-margin').textContent = margin + '%';
-        
-        const ctx = document.getElementById('productSalesChart').getContext('2d');
-        if (productSalesChart) productSalesChart.destroy();
-        if (data.daily_sales?.length) {
-          productSalesChart = new Chart(ctx, { type: 'bar', data: { labels: data.daily_sales.map(x => formatDate(x.date)), datasets: [{ data: data.daily_sales.map(x => x.units), backgroundColor: '#eab308' }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#888' } }, y: { grid: { color: '#2e2e2e' }, ticks: { color: '#888' } } } } });
-        }
-        
-        document.getElementById('pd-orders').innerHTML = data.recent_orders?.map(o => `<tr class="border-b border-[#2e2e2e]"><td class="py-2">${formatDate(o.date)}</td><td class="py-2">${o.buyer || '-'}</td><td class="py-2 text-right">${o.quantity}</td><td class="py-2 text-right">${formatCOP(o.unit_price)}</td><td class="py-2 text-right font-medium">${formatCOP(o.total)}</td></tr>`).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Sin órdenes</td></tr>';
-        
-        lucide.createIcons();
-      } catch (e) { console.error(e); }
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => { 
-      lucide.createIcons();
-      initDatePicker();
-      updateDateLabels(); 
-      navigateTo('dashboard'); 
-      setInterval(loadSyncStatus, 30000); 
-    });
+    document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); initDatePicker(); updateDateLabels(); navigateTo('dashboard'); setInterval(loadSyncStatus, 30000); });
   </script>
 </body>
 </html>
