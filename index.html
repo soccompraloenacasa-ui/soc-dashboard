@@ -14,7 +14,10 @@
   </script>
   <style>
     .date-in-range { background: rgba(37, 99, 235, 0.3); }
-    .date-selected { background: #2563eb; color: white; border-radius: 6px; }
+    .date-start { background: #2563eb; color: white; border-radius: 6px 0 0 6px; }
+    .date-end { background: #2563eb; color: white; border-radius: 0 6px 6px 0; }
+    .date-single { background: #2563eb; color: white; border-radius: 6px; }
+    .date-middle { background: rgba(37, 99, 235, 0.4); }
     .nav-item.active { background: #242424; color: white; }
     .sub-nav-item.active { background: #242424; color: white; }
   </style>
@@ -65,31 +68,31 @@
             <div><h2 class="text-2xl font-bold">Dashboard</h2><p class="text-gray-500">Vista consolidada</p></div>
             <div class="flex items-center gap-4">
               <div class="relative" id="datePickerContainer">
-                <button onclick="toggleDatePicker(event)" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
+                <button id="datePickerBtn" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
                   <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
                   <span id="dateRangeLabel" class="text-sm">Últimos 30 días</span>
                   <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                 </button>
                 <div id="datePickerDropdown" class="hidden absolute right-0 top-12 bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl shadow-2xl p-4 w-[320px] z-50">
                   <div class="flex flex-wrap gap-2 mb-4 pb-4 border-b border-[#2e2e2e]">
-                    <button onclick="setQuickRange(7); event.stopPropagation();" class="px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg">7 días</button>
-                    <button onclick="setQuickRange(30); event.stopPropagation();" class="px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg">30 días</button>
-                    <button onclick="setQuickRange(90); event.stopPropagation();" class="px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg">90 días</button>
-                    <button onclick="setQuickRange(365); event.stopPropagation();" class="px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg">1 año</button>
-                    <button onclick="setQuickRange('all'); event.stopPropagation();" class="px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg">Todo</button>
+                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="7">7 días</button>
+                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="30">30 días</button>
+                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="90">90 días</button>
+                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="365">1 año</button>
+                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="all">Todo</button>
                   </div>
                   <div class="flex items-center justify-between mb-3">
-                    <button onclick="changeMonth(-1); event.stopPropagation();" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                    <button id="prevMonthBtn" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
                     <span id="calendarMonth" class="font-semibold"></span>
-                    <button onclick="changeMonth(1); event.stopPropagation();" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+                    <button id="nextMonthBtn" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
                   </div>
                   <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
                     <div class="text-gray-500 py-1">Lu</div><div class="text-gray-500 py-1">Ma</div><div class="text-gray-500 py-1">Mi</div><div class="text-gray-500 py-1">Ju</div><div class="text-gray-500 py-1">Vi</div><div class="text-gray-500 py-1">Sa</div><div class="text-gray-500 py-1">Do</div>
                   </div>
                   <div id="calendarDays" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
                   <div class="mt-4 pt-4 border-t border-[#2e2e2e] flex items-center justify-between">
-                    <span class="text-xs text-gray-400" id="selectedRangeText">Selecciona</span>
-                    <button onclick="applyDateRange(); event.stopPropagation();" class="px-4 py-1.5 bg-profit text-white text-sm font-medium rounded-lg hover:bg-blue-600">Aplicar</button>
+                    <span class="text-xs text-gray-400" id="selectedRangeText">Selecciona inicio y fin</span>
+                    <button id="applyDateBtn" class="px-4 py-1.5 bg-profit text-white text-sm font-medium rounded-lg hover:bg-blue-600">Aplicar</button>
                   </div>
                 </div>
               </div>
@@ -124,13 +127,11 @@
           <div class="flex items-center justify-between">
             <div><h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="shopping-bag" class="w-6 h-6 text-ml"></i>Mercado Libre - Resumen</h2><p class="text-gray-500">Vista consolidada de todas las cuentas</p></div>
             <div class="flex items-center gap-4">
-              <div class="relative" id="datePickerContainerResumen">
-                <button onclick="toggleDatePicker(event)" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
-                  <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
-                  <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                </button>
-              </div>
+              <button class="date-picker-trigger flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
+                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+              </button>
               <button onclick="loadMLResumen()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
             </div>
           </div>
@@ -151,13 +152,11 @@
           <div class="flex items-center justify-between">
             <div><div class="flex items-center gap-2 mb-1"><button onclick="navigateTo('ml-resumen')" class="text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-5 h-5"></i></button><h2 class="text-2xl font-bold">COMPRALOENCASA</h2><span class="text-xs bg-ml/20 text-ml px-2 py-1 rounded">Principal</span></div><p class="text-gray-500">ID: 108098646 • Canal 1</p></div>
             <div class="flex items-center gap-4">
-              <div class="relative" id="datePickerContainerC1">
-                <button onclick="toggleDatePicker(event)" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
-                  <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
-                  <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                </button>
-              </div>
+              <button class="date-picker-trigger flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
+                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+              </button>
               <button onclick="loadMLCuenta1()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
             </div>
           </div>
@@ -181,13 +180,11 @@
           <div class="flex items-center justify-between">
             <div><h2 class="text-2xl font-bold flex items-center gap-2"><i data-lucide="package" class="w-6 h-6 text-ml"></i>Todos los Productos</h2><p class="text-gray-500">Click en un producto para ver detalle</p></div>
             <div class="flex items-center gap-4">
-              <div class="relative" id="datePickerContainerProds">
-                <button onclick="toggleDatePicker(event)" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
-                  <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
-                  <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                </button>
-              </div>
+              <button class="date-picker-trigger flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
+                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+              </button>
               <input type="text" id="productSearch" oninput="filterProducts()" placeholder="Buscar..." class="bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm w-48">
               <button onclick="loadMLProductos()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
             </div>
@@ -215,13 +212,11 @@
           <div class="flex items-center justify-between">
             <div><div class="flex items-center gap-2 mb-1"><button onclick="navigateTo('ml-productos')" class="text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-5 h-5"></i></button><h2 class="text-xl font-bold" id="producto-titulo">Producto</h2></div><p class="text-gray-500" id="producto-subtitle">Detalle de ventas</p></div>
             <div class="flex items-center gap-4">
-              <div class="relative" id="datePickerContainerPD">
-                <button onclick="toggleDatePicker(event)" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
-                  <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
-                  <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                </button>
-              </div>
+              <button class="date-picker-trigger flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
+                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+              </button>
               <button onclick="reloadProductDetail()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar</button>
             </div>
           </div>
@@ -253,12 +248,17 @@
     const productsPerPage = 20;
     let currentView = 'dashboard';
     let currentProductTitle = '';
-    let currentMonth = new Date(), startDate = null, endDate = null, selectingStart = true;
-    const today = new Date();
-    endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    startDate = new Date(endDate); startDate.setDate(startDate.getDate() - 30);
     let mlMenuOpen = false;
-    let datePickerOpen = false;
+    
+    // Date state - ALWAYS initialized
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    let currentMonth = new Date(today);
+    let dateStart = new Date(today);
+    dateStart.setDate(dateStart.getDate() - 30);
+    let dateEnd = new Date(today);
+    let tempStart = null;
+    let tempEnd = null;
     
     function toggleMLMenu() { 
       mlMenuOpen = !mlMenuOpen; 
@@ -274,7 +274,8 @@
       if (view === 'dashboard') document.getElementById('nav-dashboard').classList.add('active');
       else if (view.startsWith('ml-') || view === 'producto-detalle') {
         document.getElementById('nav-ml').classList.add('active');
-        document.getElementById('nav-' + view)?.classList.add('active');
+        const navEl = document.getElementById('nav-' + view);
+        if (navEl) navEl.classList.add('active');
         if (!mlMenuOpen) toggleMLMenu();
       }
       closeDatePicker();
@@ -291,119 +292,199 @@
       else if (currentView === 'producto-detalle' && currentProductTitle) reloadProductDetail();
     }
     
+    function formatDateLabel(d) {
+      if (!d) return '---';
+      return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    
     function updateDateLabels() {
-      const label = `${formatDateShort(startDate)} - ${formatDateShort(endDate)}`;
+      const label = `${formatDateLabel(dateStart)} - ${formatDateLabel(dateEnd)}`;
       document.getElementById('dateRangeLabel').textContent = label;
       document.querySelectorAll('.dateRangeLabelSync').forEach(el => el.textContent = label);
     }
     
-    function toggleDatePicker(event) {
-      event.stopPropagation();
+    // Date Picker Logic
+    function initDatePicker() {
+      const btn = document.getElementById('datePickerBtn');
       const dropdown = document.getElementById('datePickerDropdown');
-      datePickerOpen = !datePickerOpen;
-      dropdown.classList.toggle('hidden', !datePickerOpen);
-      if (datePickerOpen) {
+      const prevBtn = document.getElementById('prevMonthBtn');
+      const nextBtn = document.getElementById('nextMonthBtn');
+      const applyBtn = document.getElementById('applyDateBtn');
+      
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('hidden');
+        if (!dropdown.classList.contains('hidden')) {
+          tempStart = dateStart ? new Date(dateStart) : null;
+          tempEnd = dateEnd ? new Date(dateEnd) : null;
+          renderCalendar();
+        }
+      });
+      
+      prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentMonth.setMonth(currentMonth.getMonth() - 1);
         renderCalendar();
-        lucide.createIcons();
-      }
+      });
+      
+      nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        renderCalendar();
+      });
+      
+      applyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tempStart && tempEnd) {
+          dateStart = new Date(tempStart);
+          dateEnd = new Date(tempEnd);
+          closeDatePicker();
+          loadCurrentView();
+        }
+      });
+      
+      // Quick range buttons
+      document.querySelectorAll('.quick-range').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const days = btn.dataset.days;
+          tempEnd = new Date(today);
+          if (days === 'all') {
+            tempStart = new Date(2020, 0, 1);
+          } else {
+            tempStart = new Date(today);
+            tempStart.setDate(tempStart.getDate() - parseInt(days));
+          }
+          renderCalendar();
+        });
+      });
+      
+      // Other date picker triggers
+      document.querySelectorAll('.date-picker-trigger').forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle('hidden');
+          if (!dropdown.classList.contains('hidden')) {
+            tempStart = dateStart ? new Date(dateStart) : null;
+            tempEnd = dateEnd ? new Date(dateEnd) : null;
+            renderCalendar();
+          }
+        });
+      });
+      
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !e.target.closest('#datePickerBtn') && !e.target.closest('.date-picker-trigger')) {
+          dropdown.classList.add('hidden');
+        }
+      });
     }
     
     function closeDatePicker() {
-      datePickerOpen = false;
       document.getElementById('datePickerDropdown').classList.add('hidden');
     }
     
-    document.addEventListener('click', (e) => {
-      const dropdown = document.getElementById('datePickerDropdown');
-      const container = document.getElementById('datePickerContainer');
-      if (datePickerOpen && dropdown && !dropdown.contains(e.target) && !e.target.closest('[onclick*="toggleDatePicker"]')) {
-        closeDatePicker();
-      }
-    });
-    
-    function changeMonth(d) { 
-      currentMonth.setMonth(currentMonth.getMonth() + d); 
-      renderCalendar(); 
-    }
-    
     function renderCalendar() {
-      const m = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-      document.getElementById('calendarMonth').textContent = `${m[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
-      const f = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-      const l = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-      let s = f.getDay() - 1; 
-      if (s < 0) s = 6;
-      const c = document.getElementById('calendarDays'); 
-      c.innerHTML = '';
+      const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      document.getElementById('calendarMonth').textContent = `${months[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
       
-      for (let i = 0; i < s; i++) {
-        c.innerHTML += '<div class="py-2"></div>';
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+      let startOffset = firstDay.getDay() - 1;
+      if (startOffset < 0) startOffset = 6;
+      
+      const container = document.getElementById('calendarDays');
+      container.innerHTML = '';
+      
+      // Empty cells
+      for (let i = 0; i < startOffset; i++) {
+        container.innerHTML += '<div class="py-2"></div>';
       }
       
-      for (let d = 1; d <= l.getDate(); d++) {
-        const dt = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
-        const ds = dt.toISOString().split('T')[0];
-        let cls = 'py-2 cursor-pointer hover:bg-[#242424] rounded-lg transition';
+      // Day cells
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d, 12, 0, 0);
+        const isFuture = date > today;
+        const isStart = tempStart && isSameDay(date, tempStart);
+        const isEnd = tempEnd && isSameDay(date, tempEnd);
+        const isInRange = tempStart && tempEnd && date > tempStart && date < tempEnd;
+        const isSingle = isStart && isEnd;
         
-        if (startDate && endDate && dt >= startDate && dt <= endDate) {
-          cls += ' date-selected';
-        } else if (startDate && !endDate && isSameDay(dt, startDate)) {
-          cls += ' date-selected';
-        }
-        
-        if (dt > today) {
-          cls += ' text-gray-600 cursor-not-allowed';
-          c.innerHTML += `<div class="${cls}">${d}</div>`;
+        let cls = 'py-2 cursor-pointer transition ';
+        if (isFuture) {
+          cls += 'text-gray-600 cursor-not-allowed';
+        } else if (isSingle) {
+          cls += 'date-single';
+        } else if (isStart) {
+          cls += 'date-start';
+        } else if (isEnd) {
+          cls += 'date-end';
+        } else if (isInRange) {
+          cls += 'date-middle';
         } else {
-          c.innerHTML += `<div class="${cls}" onclick="selectDate('${ds}'); event.stopPropagation();">${d}</div>`;
+          cls += 'hover:bg-[#242424] rounded-lg';
+        }
+        
+        const dateStr = date.toISOString().split('T')[0];
+        if (isFuture) {
+          container.innerHTML += `<div class="${cls}">${d}</div>`;
+        } else {
+          container.innerHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
         }
       }
       
-      document.getElementById('selectedRangeText').textContent = startDate && endDate 
-        ? `${formatDateShort(startDate)} - ${formatDateShort(endDate)}` 
-        : (startDate ? `${formatDateShort(startDate)} - ?` : 'Selecciona');
-    }
-    
-    function isSameDay(a, b) { 
-      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); 
-    }
-    
-    function selectDate(ds) {
-      const d = new Date(ds + 'T12:00:00');
-      if (d > today) return;
+      // Add click handlers
+      container.querySelectorAll('[data-date]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectDate(el.dataset.date);
+        });
+      });
       
-      if (selectingStart || (startDate && d < startDate)) {
-        startDate = d;
-        endDate = null;
-        selectingStart = false;
+      // Update selected text
+      updateSelectedText();
+      lucide.createIcons();
+    }
+    
+    function isSameDay(a, b) {
+      return a.getFullYear() === b.getFullYear() && 
+             a.getMonth() === b.getMonth() && 
+             a.getDate() === b.getDate();
+    }
+    
+    function selectDate(dateStr) {
+      const clicked = new Date(dateStr + 'T12:00:00');
+      
+      if (!tempStart || (tempStart && tempEnd)) {
+        // Start new selection
+        tempStart = clicked;
+        tempEnd = null;
       } else {
-        endDate = d;
-        selectingStart = true;
+        // Complete selection
+        if (clicked < tempStart) {
+          tempEnd = tempStart;
+          tempStart = clicked;
+        } else {
+          tempEnd = clicked;
+        }
       }
       renderCalendar();
     }
     
-    function setQuickRange(days) { 
-      endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate()); 
-      if (days === 'all') {
-        startDate = new Date(2020, 0, 1);
-      } else { 
-        startDate = new Date(endDate); 
-        startDate.setDate(startDate.getDate() - days); 
+    function updateSelectedText() {
+      const el = document.getElementById('selectedRangeText');
+      if (tempStart && tempEnd) {
+        el.textContent = `${formatDateLabel(tempStart)} - ${formatDateLabel(tempEnd)}`;
+      } else if (tempStart) {
+        el.textContent = `${formatDateLabel(tempStart)} - selecciona fin`;
+      } else {
+        el.textContent = 'Selecciona inicio y fin';
       }
-      selectingStart = true; 
-      renderCalendar(); 
     }
     
-    function applyDateRange() { 
-      if (!startDate || !endDate) return; 
-      closeDatePicker();
-      loadCurrentView(); 
-    }
-    
-    function getDaysInRange() { 
-      if (!startDate || !endDate) return 30; 
-      return Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1; 
+    function getDaysInRange() {
+      if (!dateStart || !dateEnd) return 30;
+      return Math.ceil((dateEnd - dateStart) / (1000 * 60 * 60 * 24)) + 1;
     }
     
     function formatCOP(v) { 
@@ -415,10 +496,6 @@
     function formatDate(d) { 
       if (!d) return '-'; 
       return new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }); 
-    }
-    
-    function formatDateShort(d) { 
-      return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }); 
     }
     
     function showLoading() { 
@@ -636,7 +713,8 @@
     }
     
     document.addEventListener('DOMContentLoaded', () => { 
-      lucide.createIcons(); 
+      lucide.createIcons();
+      initDatePicker();
       updateDateLabels(); 
       navigateTo('dashboard'); 
       setInterval(loadSyncStatus, 30000); 
