@@ -194,7 +194,28 @@
           <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#2e2e2e]">
             <div class="flex items-center justify-between mb-4">
               <span class="text-gray-500 text-sm">Mostrando <span id="products-showing">0</span> de <span id="products-total">0</span></span>
-              <select id="productSort" onchange="sortProducts()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm"><option value="revenue">Mayor ingreso</option><option value="units">Más vendidos</option><option value="orders">Más órdenes</option><option value="name">Nombre A-Z</option></select>
+              <select id="productSort" onchange="sortProducts()" class="bg-[#242424] border border-[#2e2e2e] rounded-lg px-3 py-1.5 text-sm">
+                <optgroup label="Por Ingresos">
+                  <option value="revenue_desc">Mayor ingreso ↓</option>
+                  <option value="revenue_asc">Menor ingreso ↑</option>
+                </optgroup>
+                <optgroup label="Por Unidades">
+                  <option value="units_desc">Más unidades ↓</option>
+                  <option value="units_asc">Menos unidades ↑</option>
+                </optgroup>
+                <optgroup label="Por Órdenes">
+                  <option value="orders_desc">Más órdenes ↓</option>
+                  <option value="orders_asc">Menos órdenes ↑</option>
+                </optgroup>
+                <optgroup label="Por Nombre">
+                  <option value="name_asc">Nombre A-Z</option>
+                  <option value="name_desc">Nombre Z-A</option>
+                </optgroup>
+                <optgroup label="Por Rentabilidad">
+                  <option value="net_desc">Mayor neto ↓</option>
+                  <option value="net_asc">Menor neto ↑</option>
+                </optgroup>
+              </select>
             </div>
             <table class="w-full text-sm"><thead><tr class="text-gray-500 border-b border-[#2e2e2e]"><th class="text-left pb-3">#</th><th class="text-left pb-3">Producto</th><th class="text-right pb-3">Unidades</th><th class="text-right pb-3">Ingresos</th><th class="text-right pb-3">Envío</th><th class="text-right pb-3">Fee</th><th class="text-right pb-3">Neto</th></tr></thead><tbody id="all-products-table"></tbody></table>
             <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#2e2e2e]">
@@ -622,7 +643,7 @@
         allProducts = data.products || [];
         filteredProducts = [...allProducts];
         currentPage = 1;
-        renderProductsTable();
+        sortProducts(); // Apply default sort
       } catch (e) { console.error(e); }
     }
     
@@ -641,15 +662,44 @@
       const s = document.getElementById('productSearch').value.toLowerCase(); 
       filteredProducts = allProducts.filter(p => p.title.toLowerCase().includes(s)); 
       currentPage = 1; 
-      renderProductsTable(); 
+      sortProducts();
     }
     
     function sortProducts() { 
-      const s = document.getElementById('productSort').value; 
-      if (s === 'revenue') filteredProducts.sort((a, b) => b.revenue - a.revenue); 
-      else if (s === 'units') filteredProducts.sort((a, b) => b.units_sold - a.units_sold); 
-      else if (s === 'orders') filteredProducts.sort((a, b) => b.orders_count - a.orders_count); 
-      else if (s === 'name') filteredProducts.sort((a, b) => a.title.localeCompare(b.title)); 
+      const sortVal = document.getElementById('productSort').value;
+      const [field, order] = sortVal.split('_');
+      const asc = order === 'asc';
+      
+      filteredProducts.sort((a, b) => {
+        let valA, valB;
+        
+        switch(field) {
+          case 'revenue':
+            valA = a.revenue || 0;
+            valB = b.revenue || 0;
+            break;
+          case 'units':
+            valA = a.units_sold || 0;
+            valB = b.units_sold || 0;
+            break;
+          case 'orders':
+            valA = a.orders_count || 0;
+            valB = b.orders_count || 0;
+            break;
+          case 'name':
+            return asc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
+          case 'net':
+            valA = a.net || 0;
+            valB = b.net || 0;
+            break;
+          default:
+            valA = a.revenue || 0;
+            valB = b.revenue || 0;
+        }
+        
+        return asc ? valA - valB : valB - valA;
+      });
+      
       currentPage = 1; 
       renderProductsTable(); 
     }
