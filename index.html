@@ -281,6 +281,22 @@
     let tempStart = null;
     let tempEnd = null;
     
+    // Helper: format date as YYYY-MM-DD for API
+    function formatDateForAPI(d) {
+      if (!d) return null;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    // Build date params for API calls
+    function getDateParams() {
+      const dateFromStr = formatDateForAPI(dateStart);
+      const dateToStr = formatDateForAPI(dateEnd);
+      return `date_from=${dateFromStr}&date_to=${dateToStr}`;
+    }
+    
     function toggleMLMenu() { 
       mlMenuOpen = !mlMenuOpen; 
       document.getElementById('ml-submenu').classList.toggle('hidden', !mlMenuOpen); 
@@ -494,11 +510,6 @@
       }
     }
     
-    function getDaysInRange() {
-      if (!dateStart || !dateEnd) return 30;
-      return Math.ceil((dateEnd - dateStart) / (1000 * 60 * 60 * 24)) + 1;
-    }
-    
     function formatCOP(v) { 
       if (v >= 1000000) return '$' + (v / 1000000).toFixed(1) + 'M'; 
       if (v >= 1000) return '$' + (v / 1000).toFixed(0) + 'K'; 
@@ -555,10 +566,10 @@
     async function loadDashboard() {
       showLoading();
       try {
-        const days = getDaysInRange();
+        const dateParams = getDateParams();
         await loadSyncStatus();
         const [dashboard, stats] = await Promise.all([
-          fetchAPI(`/ml/analytics/dashboard?channel_id=${CHANNEL_ID}&days=${days}`), 
+          fetchAPI(`/ml/analytics/dashboard?channel_id=${CHANNEL_ID}&${dateParams}`), 
           fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`)
         ]);
         const m = dashboard.metrics;
@@ -572,19 +583,19 @@
         document.getElementById('ordersChange').textContent = (oc >= 0 ? '↑ ' : '↓ ') + Math.abs(oc) + '%';
         document.getElementById('ordersChange').className = 'text-sm mt-1 font-medium ' + (oc >= 0 ? 'text-shopify' : 'text-gastos');
         
-        const salesData = await fetchAPI(`/ml/analytics/sales-by-day?channel_id=${CHANNEL_ID}&days=${days}`);
+        const salesData = await fetchAPI(`/ml/analytics/sales-by-day?channel_id=${CHANNEL_ID}&${dateParams}`);
         const ctx1 = document.getElementById('salesChart').getContext('2d');
         if (salesChart) salesChart.destroy();
         salesChart = new Chart(ctx1, { type: 'line', data: { labels: salesData.data.map(x => formatDate(x.date)), datasets: [{ data: salesData.data.map(x => x.revenue / 1000000), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', tension: 0.4, fill: true, pointRadius: 2 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#2e2e2e' }, ticks: { color: '#888', maxTicksLimit: 10 } }, y: { grid: { color: '#2e2e2e' }, ticks: { color: '#888', callback: v => '$' + v + 'M' } } } } });
         
-        const statusData = await fetchAPI(`/ml/analytics/orders-by-status?channel_id=${CHANNEL_ID}&days=${days}`);
+        const statusData = await fetchAPI(`/ml/analytics/orders-by-status?channel_id=${CHANNEL_ID}&${dateParams}`);
         const colors = { 'paid': '#22c55e', 'cancelled': '#ef4444', 'pending': '#eab308', 'partially_refunded': '#f97316' };
         const ctx2 = document.getElementById('statusChart').getContext('2d');
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(ctx2, { type: 'doughnut', data: { labels: statusData.statuses.map(s => s.status), datasets: [{ data: statusData.statuses.map(s => s.count), backgroundColor: statusData.statuses.map(s => colors[s.status] || '#6b7280'), borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { display: false } }, cutout: '70%' } });
         document.getElementById('statusLegend').innerHTML = statusData.statuses.map(s => `<div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:${colors[s.status] || '#6b7280'}"></span>${s.status}</span><span class="font-medium">${s.count}</span></div>`).join('');
         
-        const prods = await fetchAPI(`/ml/analytics/top-products?channel_id=${CHANNEL_ID}&days=${days}&limit=10`);
+        const prods = await fetchAPI(`/ml/analytics/top-products?channel_id=${CHANNEL_ID}&${dateParams}&limit=10`);
         document.getElementById('productsTable').innerHTML = prods.products?.map((p, i) => `<tr class="border-b border-[#2e2e2e] hover:bg-[#242424] cursor-pointer" onclick="showProductDetail('${encodeURIComponent(p.title)}')"><td class="py-3 text-gray-500">${i + 1}</td><td class="py-3 font-medium">${p.title}</td><td class="py-3 text-right">${p.units_sold.toLocaleString()}</td><td class="py-3 text-right font-bold text-shopify">${formatCOP(p.revenue)}</td><td class="py-3 text-right text-gray-400">${p.orders_count}</td></tr>`).join('') || '<tr><td colspan="5" class="py-4 text-center text-gray-500">Sin datos</td></tr>';
         
         showContent();
@@ -594,10 +605,10 @@
     
     async function loadMLResumen() {
       try {
-        const days = getDaysInRange();
+        const dateParams = getDateParams();
         const [stats, fin] = await Promise.all([
           fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`), 
-          fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&days=${days}`)
+          fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&${dateParams}`)
         ]);
         document.getElementById('ml-cuenta1-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0);
         document.getElementById('ml-cuenta1-orders').textContent = (fin.orders_count || 0).toLocaleString() + ' órdenes';
@@ -612,11 +623,11 @@
     
     async function loadMLCuenta1() {
       try {
-        const days = getDaysInRange();
+        const dateParams = getDateParams();
         const [stats, fin, prods] = await Promise.all([
           fetchAPI(`/ml/orders/stats?channel_id=${CHANNEL_ID}`),
-          fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&days=${days}`),
-          fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&days=${days}&limit=15`)
+          fetchAPI(`/ml/financials?channel_id=${CHANNEL_ID}&${dateParams}`),
+          fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&${dateParams}&limit=15`)
         ]);
         document.getElementById('c1-revenue').textContent = fin.formatted?.revenue || formatCOP(fin.totals?.revenue || 0);
         document.getElementById('c1-orders').textContent = (fin.orders_count || 0).toLocaleString();
@@ -638,8 +649,8 @@
     
     async function loadMLProductos() {
       try {
-        const days = getDaysInRange();
-        const data = await fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&days=${days}&limit=500`);
+        const dateParams = getDateParams();
+        const data = await fetchAPI(`/ml/financials/by-product?channel_id=${CHANNEL_ID}&${dateParams}&limit=500`);
         allProducts = data.products || [];
         filteredProducts = [...allProducts];
         currentPage = 1;
@@ -728,8 +739,8 @@
     
     async function loadProductDetailData(title) {
       try {
-        const days = getDaysInRange();
-        const data = await fetchAPI(`/ml/product/${encodeURIComponent(title)}?channel_id=${CHANNEL_ID}&days=${days}`);
+        const dateParams = getDateParams();
+        const data = await fetchAPI(`/ml/product/${encodeURIComponent(title)}?channel_id=${CHANNEL_ID}&${dateParams}`);
         const s = data.summary;
         document.getElementById('pd-units').textContent = s.total_units.toLocaleString();
         document.getElementById('pd-revenue').textContent = data.formatted?.revenue || formatCOP(s.total_revenue);
