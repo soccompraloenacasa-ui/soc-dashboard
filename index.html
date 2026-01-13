@@ -24,6 +24,30 @@
 </head>
 <body class="bg-[#0a0a0a] text-white min-h-screen">
   
+  <!-- GLOBAL DATE PICKER DROPDOWN -->
+  <div id="datePickerDropdown" class="hidden fixed bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl shadow-2xl p-4 w-[320px] z-[100]">
+    <div class="flex flex-wrap gap-2 mb-4 pb-4 border-b border-[#2e2e2e]">
+      <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="7">7 días</button>
+      <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="30">30 días</button>
+      <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="90">90 días</button>
+      <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="365">1 año</button>
+      <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="all">Todo</button>
+    </div>
+    <div class="flex items-center justify-between mb-3">
+      <button id="prevMonthBtn" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+      <span id="calendarMonth" class="font-semibold"></span>
+      <button id="nextMonthBtn" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+    </div>
+    <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+      <div class="text-gray-500 py-1">Lu</div><div class="text-gray-500 py-1">Ma</div><div class="text-gray-500 py-1">Mi</div><div class="text-gray-500 py-1">Ju</div><div class="text-gray-500 py-1">Vi</div><div class="text-gray-500 py-1">Sa</div><div class="text-gray-500 py-1">Do</div>
+    </div>
+    <div id="calendarDays" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
+    <div class="mt-4 pt-4 border-t border-[#2e2e2e] flex items-center justify-between">
+      <span class="text-xs text-gray-400" id="selectedRangeText">Selecciona inicio y fin</span>
+      <button id="applyDateBtn" class="px-4 py-1.5 bg-profit text-white text-sm font-medium rounded-lg hover:bg-blue-600">Aplicar</button>
+    </div>
+  </div>
+  
   <div class="flex h-screen overflow-hidden">
     <!-- SIDEBAR -->
     <aside class="w-64 bg-[#121212] border-r border-[#2e2e2e] flex flex-col">
@@ -67,35 +91,11 @@
           <div class="flex items-center justify-between">
             <div><h2 class="text-2xl font-bold">Dashboard</h2><p class="text-gray-500">Vista consolidada</p></div>
             <div class="flex items-center gap-4">
-              <div class="relative" id="datePickerContainer">
-                <button id="datePickerBtn" class="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
-                  <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
-                  <span id="dateRangeLabel" class="text-sm">Últimos 30 días</span>
-                  <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                </button>
-                <div id="datePickerDropdown" class="hidden absolute right-0 top-12 bg-[#1a1a1a] border border-[#2e2e2e] rounded-xl shadow-2xl p-4 w-[320px] z-50">
-                  <div class="flex flex-wrap gap-2 mb-4 pb-4 border-b border-[#2e2e2e]">
-                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="7">7 días</button>
-                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="30">30 días</button>
-                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="90">90 días</button>
-                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="365">1 año</button>
-                    <button class="quick-range px-3 py-1.5 text-xs bg-[#242424] hover:bg-[#2e2e2e] rounded-lg" data-days="all">Todo</button>
-                  </div>
-                  <div class="flex items-center justify-between mb-3">
-                    <button id="prevMonthBtn" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
-                    <span id="calendarMonth" class="font-semibold"></span>
-                    <button id="nextMonthBtn" class="p-1 hover:bg-[#242424] rounded-lg"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
-                  </div>
-                  <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
-                    <div class="text-gray-500 py-1">Lu</div><div class="text-gray-500 py-1">Ma</div><div class="text-gray-500 py-1">Mi</div><div class="text-gray-500 py-1">Ju</div><div class="text-gray-500 py-1">Vi</div><div class="text-gray-500 py-1">Sa</div><div class="text-gray-500 py-1">Do</div>
-                  </div>
-                  <div id="calendarDays" class="grid grid-cols-7 gap-1 text-center text-sm"></div>
-                  <div class="mt-4 pt-4 border-t border-[#2e2e2e] flex items-center justify-between">
-                    <span class="text-xs text-gray-400" id="selectedRangeText">Selecciona inicio y fin</span>
-                    <button id="applyDateBtn" class="px-4 py-1.5 bg-profit text-white text-sm font-medium rounded-lg hover:bg-blue-600">Aplicar</button>
-                  </div>
-                </div>
-              </div>
+              <button class="date-picker-trigger flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-4 py-2 hover:bg-[#242424] border border-[#2e2e2e]">
+                <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                <span class="dateRangeLabelSync text-sm">Últimos 30 días</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+              </button>
               <button onclick="loadCurrentView()" class="px-4 py-2 bg-ml text-black font-medium rounded-lg hover:bg-yellow-400 flex items-center gap-2">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>Actualizar
               </button>
@@ -299,27 +299,15 @@
     
     function updateDateLabels() {
       const label = `${formatDateLabel(dateStart)} - ${formatDateLabel(dateEnd)}`;
-      document.getElementById('dateRangeLabel').textContent = label;
       document.querySelectorAll('.dateRangeLabelSync').forEach(el => el.textContent = label);
     }
     
     // Date Picker Logic
     function initDatePicker() {
-      const btn = document.getElementById('datePickerBtn');
       const dropdown = document.getElementById('datePickerDropdown');
       const prevBtn = document.getElementById('prevMonthBtn');
       const nextBtn = document.getElementById('nextMonthBtn');
       const applyBtn = document.getElementById('applyDateBtn');
-      
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('hidden');
-        if (!dropdown.classList.contains('hidden')) {
-          tempStart = dateStart ? new Date(dateStart) : null;
-          tempEnd = dateEnd ? new Date(dateEnd) : null;
-          renderCalendar();
-        }
-      });
       
       prevBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -359,10 +347,13 @@
         });
       });
       
-      // Other date picker triggers
+      // Date picker triggers - open dropdown positioned near the button
       document.querySelectorAll('.date-picker-trigger').forEach(trigger => {
         trigger.addEventListener('click', (e) => {
           e.stopPropagation();
+          const rect = trigger.getBoundingClientRect();
+          dropdown.style.top = (rect.bottom + 8) + 'px';
+          dropdown.style.right = (window.innerWidth - rect.right) + 'px';
           dropdown.classList.toggle('hidden');
           if (!dropdown.classList.contains('hidden')) {
             tempStart = dateStart ? new Date(dateStart) : null;
@@ -374,7 +365,7 @@
       
       // Close on outside click
       document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && !e.target.closest('#datePickerBtn') && !e.target.closest('.date-picker-trigger')) {
+        if (!dropdown.contains(e.target) && !e.target.closest('.date-picker-trigger')) {
           dropdown.classList.add('hidden');
         }
       });
