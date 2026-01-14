@@ -698,9 +698,39 @@
     // ==================
     
     function connectMeta() {
-      const url = `${API_BASE}/meta/auth/url?channel_id=${META_CHANNEL_ID}`;
-      window.open(url, '_blank');
-      alert('Se abrió una ventana para conectar con Meta.\n\nDespués de autorizar, los datos se sincronizarán automáticamente.');
+      // Endpoint correcto que hace redirect a Facebook
+      const url = `${API_BASE}/meta/auth/connect?channel_id=${META_CHANNEL_ID}`;
+      
+      // Abrir popup centrado (no pestaña nueva)
+      const width = 600;
+      const height = 700;
+      const left = Math.round((window.innerWidth - width) / 2 + window.screenX);
+      const top = Math.round((window.innerHeight - height) / 2 + window.screenY);
+      
+      const popup = window.open(
+        url,
+        'meta_oauth_popup',
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      );
+      
+      // Escuchar mensaje cuando se complete la auth
+      window.addEventListener('message', function handleMetaAuth(event) {
+        if (event.data?.type === 'META_AUTH_SUCCESS') {
+          window.removeEventListener('message', handleMetaAuth);
+          metaConnected = true;
+          updateMetaUI(true);
+          loadAdminStatus();
+        }
+      });
+      
+      // Verificar si el popup se cerró (polling)
+      const checkPopup = setInterval(() => {
+        if (popup && popup.closed) {
+          clearInterval(checkPopup);
+          // Recargar estado por si se completó
+          setTimeout(() => loadAdminStatus(), 1000);
+        }
+      }, 1000);
     }
     
     async function disconnectMeta() {
