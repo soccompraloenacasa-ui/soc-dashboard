@@ -224,35 +224,41 @@
                   </div>
                 </div>
                 
-                <!-- Not Connected State -->
+                <!-- Not Connected State - Login Form -->
                 <div id="dropi-form-container">
-                  <div class="mb-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                    <p class="text-yellow-500 text-sm font-medium mb-2">⚠️ Dropi requiere conexión manual</p>
-                    <p class="text-gray-400 text-xs">Dropi bloquea conexiones desde servidores. Necesitas copiar tu token de sesión.</p>
+                  <div class="mb-4 p-3 rounded-lg bg-[#242424] border border-[#2e2e2e]">
+                    <p class="text-gray-300 text-sm">Usa las mismas credenciales que usas en Dropi</p>
+                    <p class="text-gray-500 text-xs mt-1">Tus credenciales se guardan encriptadas y solo se usan para obtener datos de tus pedidos.</p>
                   </div>
                   
-                  <div class="space-y-4">
-                    <div class="bg-[#242424] rounded-lg p-4">
-                      <p class="text-sm font-medium mb-3">📋 Pasos para conectar:</p>
-                      <ol class="text-xs text-gray-400 space-y-2 list-decimal list-inside">
-                        <li>Abre <a href="https://app.dropi.co" target="_blank" class="text-dropi hover:underline">app.dropi.co</a> e inicia sesión</li>
-                        <li>Presiona <kbd class="px-1.5 py-0.5 bg-[#1a1a1a] rounded text-gray-300">F12</kbd> para abrir DevTools</li>
-                        <li>Ve a <span class="text-white">Application</span> → <span class="text-white">Local Storage</span> → <span class="text-white">https://app.dropi.co</span></li>
-                        <li>Copia el valor de <span class="text-dropi font-mono">token</span></li>
-                        <li>Pégalo abajo</li>
-                      </ol>
+                  <form onsubmit="connectDropi(event)" class="space-y-4">
+                    <div>
+                      <label class="block text-sm text-gray-400 mb-1">País</label>
+                      <select id="dropi-country" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-dropi focus:outline-none">
+                        <option value="co">🇨🇴 Colombia</option>
+                        <option value="gt">🇬🇹 Guatemala</option>
+                        <option value="mx">🇲🇽 México</option>
+                        <option value="pe">🇵🇪 Perú</option>
+                        <option value="ec">🇪🇨 Ecuador</option>
+                        <option value="cl">🇨🇱 Chile</option>
+                      </select>
                     </div>
                     
                     <div>
-                      <label class="block text-sm text-gray-400 mb-1">Token JWT</label>
-                      <textarea id="dropi-token" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-dropi focus:outline-none font-mono text-xs"></textarea>
+                      <label class="block text-sm text-gray-400 mb-1">Email de Dropi</label>
+                      <input type="email" id="dropi-email" required placeholder="tu@email.com" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-dropi focus:outline-none">
                     </div>
                     
-                    <button onclick="connectDropiManual()" id="dropi-submit" class="w-full px-4 py-2 bg-dropi text-white font-medium rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2">
+                    <div>
+                      <label class="block text-sm text-gray-400 mb-1">Contraseña de Dropi</label>
+                      <input type="password" id="dropi-password" required placeholder="••••••••" class="w-full bg-[#242424] border border-[#2e2e2e] rounded-lg px-4 py-2 text-sm focus:border-dropi focus:outline-none">
+                    </div>
+                    
+                    <button type="submit" id="dropi-submit" class="w-full px-4 py-2 bg-dropi text-white font-medium rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2">
                       <i data-lucide="plug" class="w-4 h-4"></i>
-                      Conectar con Token
+                      Conectar
                     </button>
-                  </div>
+                  </form>
                   
                   <div id="dropi-error" class="hidden mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm"></div>
                 </div>
@@ -585,13 +591,17 @@
     // DROPI FUNCTIONS
     // ==================
     
-    async function connectDropiManual() {
-      const token = document.getElementById('dropi-token').value.trim();
+    async function connectDropi(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('dropi-email').value.trim();
+      const password = document.getElementById('dropi-password').value;
+      const country = document.getElementById('dropi-country').value;
       const btn = document.getElementById('dropi-submit');
       const errorDiv = document.getElementById('dropi-error');
       
-      if (!token) {
-        errorDiv.textContent = 'Ingresa el token JWT';
+      if (!email || !password) {
+        errorDiv.textContent = 'Email y contraseña requeridos';
         errorDiv.classList.remove('hidden');
         return;
       }
@@ -601,21 +611,25 @@
       errorDiv.classList.add('hidden');
       
       try {
-        const response = await fetch(`${API_BASE}/dropi/auth/connect-manual?channel_id=${DROPI_CHANNEL_ID}`, {
+        const response = await fetch(`${API_BASE}/dropi/auth/login?channel_id=${DROPI_CHANNEL_ID}&country=${country}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token })
+          body: JSON.stringify({ email, password, country })
         });
         
         const data = await response.json();
         
         if (data.success) {
-          dropiUser = data.user_info || { id: 'Conectado' };
+          dropiUser = {
+            id: data.user_id,
+            name: data.user_name,
+            email: data.email
+          };
           updateDropiUI(true);
           alert('✅ Dropi conectado exitosamente!');
           loadAdminStatus();
         } else {
-          errorDiv.textContent = data.error || 'Error al guardar token';
+          errorDiv.textContent = data.error || 'Error de autenticación';
           errorDiv.classList.remove('hidden');
         }
       } catch (e) {
@@ -623,13 +637,13 @@
         errorDiv.classList.remove('hidden');
       }
       
-      btn.innerHTML = '<i data-lucide="plug" class="w-4 h-4"></i>Conectar con Token';
+      btn.innerHTML = '<i data-lucide="plug" class="w-4 h-4"></i>Conectar';
       btn.disabled = false;
       lucide.createIcons();
     }
     
     async function disconnectDropi() {
-      if (!confirm('¿Desconectar Dropi? Tendrás que volver a copiar el token.')) return;
+      if (!confirm('¿Desconectar Dropi?')) return;
       
       try {
         await fetch(`${API_BASE}/dropi/auth/disconnect?channel_id=${DROPI_CHANNEL_ID}`, { method: 'POST' });
@@ -650,11 +664,12 @@
       if (connected && dropiUser) {
         formContainer.classList.add('hidden');
         connectedInfo.classList.remove('hidden');
-        userInfo.textContent = `Usuario ID: ${dropiUser.id || dropiUser.email || 'Conectado'}`;
+        userInfo.textContent = dropiUser.name ? `${dropiUser.name} (${dropiUser.email || dropiUser.id})` : `Usuario ID: ${dropiUser.id}`;
       } else {
         formContainer.classList.remove('hidden');
         connectedInfo.classList.add('hidden');
-        document.getElementById('dropi-token').value = '';
+        document.getElementById('dropi-email').value = '';
+        document.getElementById('dropi-password').value = '';
         document.getElementById('dropi-error').classList.add('hidden');
       }
     }
