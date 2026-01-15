@@ -3,10 +3,13 @@ import { ShoppingBag, Package, RefreshCw, ArrowLeft } from 'lucide-react';
 import { getFinancials, getOrdersStats, getFinancialsByProduct, formatCOP, formatDateForAPI, CHANNEL_IDS } from '../../services/api';
 
 const CHANNELS = [
+  // MercadoLibre channels
   { id: CHANNEL_IDS.ML_MAIN, name: 'COMPRALOENCASA', type: 'ml', color: 'yellow', externalId: '108098646' },
   { id: CHANNEL_IDS.ML_CUENTA2, name: 'ML Cuenta 2', type: 'ml', color: 'yellow', externalId: '106449348', pending: true },
   { id: CHANNEL_IDS.ML_CUENTA3, name: 'ML Cuenta 3', type: 'ml', color: 'yellow', externalId: '757777271', pending: true },
-  { id: CHANNEL_IDS.DROPI, name: 'Dropi', type: 'dropi', color: 'orange', pending: true },
+  // Dropi channels
+  { id: CHANNEL_IDS.DROPI, name: 'Dropi Principal', type: 'dropi', color: 'orange', pending: true },
+  { id: CHANNEL_IDS.DROPI_2, name: 'Dropi Productos Propios', type: 'dropi', color: 'orange', pending: true },
 ];
 
 export default function VentasCanales() {
