@@ -28,7 +28,7 @@ export default function Conexiones() {
   const [shopifyStatus, setShopifyStatus] = useState({ connected: false, shop: null });
 
   // Dropi form state (with channel selector)
-  const [dropiForm, setDropiForm] = useState({ email: '', password: '', country: 'co', channelId: CHANNEL_IDS.DROPI });
+  const [dropiForm, setDropiForm] = useState({ email: '', password: '', country: 'co', channelId: null });
   const [dropiLoading, setDropiLoading] = useState(false);
   const [dropiError, setDropiError] = useState('');
 
@@ -63,6 +63,12 @@ export default function Conexiones() {
       });
       setDropiChannels(dropi);
 
+      // Set default Dropi channelId to first unconnected channel
+      const firstUnconnectedDropi = dropi.find(c => !c.connected);
+      if (firstUnconnectedDropi) {
+        setDropiForm(prev => ({ ...prev, channelId: prev.channelId || firstUnconnectedDropi.id }));
+      }
+
       // Meta channels (match by ID)
       const meta = META_CHANNELS.map(mc => {
         const found = allChannels.find(c => c.id === mc.id);
@@ -96,13 +102,18 @@ export default function Conexiones() {
 
   const handleConnectDropi = async (e) => {
     e.preventDefault();
+    if (!dropiForm.channelId) {
+      setDropiError('Selecciona una cuenta Dropi');
+      return;
+    }
     setDropiLoading(true);
     setDropiError('');
     try {
       const { data } = await connectDropi(dropiForm.channelId, dropiForm.country, dropiForm.email, dropiForm.password);
       if (data.success) {
-        alert('Dropi conectado exitosamente!');
-        setDropiForm({ ...dropiForm, email: '', password: '' });
+        alert(`Dropi conectado exitosamente! (Canal ${dropiForm.channelId})`);
+        // Reset form - channelId will be set to next available by loadStatus
+        setDropiForm({ email: '', password: '', country: 'co', channelId: null });
         loadStatus();
       } else {
         setDropiError(data.error || 'Error de autenticación');
