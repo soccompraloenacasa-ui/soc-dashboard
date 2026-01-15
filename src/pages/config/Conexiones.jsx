@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, ShoppingBag, Package, Store, Megaphone, Plug, Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, ShoppingBag, Package, Store, Megaphone, Plug, Loader, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import {
   getChannelsStatus, disconnectChannel, getMLAuthUrl,
   connectDropi, disconnectDropi as apiDisconnectDropi,
@@ -212,7 +212,7 @@ export default function Conexiones() {
       </div>
 
       {/* Status Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <div className="bg-[#111] rounded-xl p-4 border border-[#222] text-center">
           <ShoppingBag className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
           <p className="font-medium text-white">Mercado Libre</p>
@@ -240,6 +240,11 @@ export default function Conexiones() {
           <p className={`text-xs mt-1 ${metaConnected > 0 ? 'text-green-500' : 'text-yellow-500'}`}>
             {metaConnected}/{metaChannels.length} conectadas
           </p>
+        </div>
+        <div className="bg-[#111] rounded-xl p-4 border border-[#222] text-center opacity-60">
+          <Store className="w-8 h-8 mx-auto mb-2 text-purple-500" />
+          <p className="font-medium text-white">MasterShops</p>
+          <p className="text-xs mt-1 text-gray-500">Próximamente</p>
         </div>
       </div>
 
@@ -479,6 +484,32 @@ export default function Conexiones() {
             </div>
             <div className="p-3 rounded-lg bg-[#1a1a1a] border border-[#222]">
               <p className="text-gray-400 text-xs">Cada cuenta de Meta Ads se conecta por separado mediante OAuth con Facebook.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* MasterShops - Coming Soon */}
+        <div className="bg-[#111] rounded-xl border border-[#222] overflow-hidden opacity-60">
+          <div className="bg-purple-500/10 px-5 py-4 border-b border-[#222]">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2 text-white">
+                <Store className="w-5 h-5 text-purple-500" />
+                MasterShops
+              </h3>
+              <span className="text-xs px-2 py-1 rounded bg-gray-500/20 text-gray-400 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Próximamente
+              </span>
+            </div>
+            <p className="text-gray-500 text-sm">Marketplace de productos</p>
+          </div>
+          <div className="p-5">
+            <div className="p-4 rounded-lg bg-[#1a1a1a] border border-[#222] text-center">
+              <Clock className="w-10 h-10 mx-auto mb-3 text-gray-600" />
+              <p className="text-gray-400 font-medium mb-1">Integración en desarrollo</p>
+              <p className="text-gray-500 text-sm">
+                Pronto podrás conectar tu cuenta de MasterShops para sincronizar productos y pedidos.
+              </p>
             </div>
           </div>
         </div>

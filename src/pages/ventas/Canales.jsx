@@ -10,6 +10,8 @@ const CHANNELS = [
   // Dropi channels
   { id: CHANNEL_IDS.DROPI, name: 'Dropi Principal', type: 'dropi', color: 'orange', pending: true },
   { id: CHANNEL_IDS.DROPI_2, name: 'Dropi Productos Propios', type: 'dropi', color: 'orange', pending: true },
+  // MasterShops - Coming soon
+  { id: 11, name: 'MasterShops', type: 'mastershops', color: 'purple', pending: true, comingSoon: true },
 ];
 
 export default function VentasCanales() {
@@ -72,16 +74,18 @@ export default function VentasCanales() {
           <p className="text-gray-500">Selecciona un canal para ver sus métricas</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           {CHANNELS.map(channel => (
             <button
               key={channel.id}
-              onClick={() => !channel.pending && setSelectedChannel(channel)}
-              disabled={channel.pending}
+              onClick={() => !channel.pending && !channel.comingSoon && setSelectedChannel(channel)}
+              disabled={channel.pending || channel.comingSoon}
               className={`bg-[#111] rounded-xl p-5 border-l-4 text-left transition-all ${
-                channel.pending
-                  ? 'border-gray-600 opacity-50 cursor-not-allowed'
-                  : `border-${channel.color}-500 hover:bg-[#1a1a1a] cursor-pointer`
+                channel.comingSoon
+                  ? 'border-purple-500 opacity-50 cursor-not-allowed'
+                  : channel.pending
+                    ? 'border-gray-600 opacity-50 cursor-not-allowed'
+                    : `border-${channel.color}-500 hover:bg-[#1a1a1a] cursor-pointer`
               }`}
             >
               <div className="flex items-center justify-between mb-3">
@@ -89,14 +93,21 @@ export default function VentasCanales() {
                   {channel.name}
                 </span>
                 <span className={`text-xs px-2 py-1 rounded ${
-                  channel.pending
-                    ? 'bg-gray-500/20 text-gray-400'
-                    : `bg-${channel.color}-500/20 text-${channel.color}-500`
+                  channel.comingSoon
+                    ? 'bg-purple-500/20 text-purple-400'
+                    : channel.pending
+                      ? 'bg-gray-500/20 text-gray-400'
+                      : `bg-${channel.color}-500/20 text-${channel.color}-500`
                 }`}>
-                  {channel.pending ? 'Pendiente' : 'Activa'}
+                  {channel.comingSoon ? 'Próximamente' : channel.pending ? 'Pendiente' : 'Activa'}
                 </span>
               </div>
-              {channel.pending ? (
+              {channel.comingSoon ? (
+                <>
+                  <p className="text-2xl font-bold text-gray-600">-</p>
+                  <p className="text-gray-600 text-sm">Integración en desarrollo</p>
+                </>
+              ) : channel.pending ? (
                 <>
                   <p className="text-2xl font-bold text-gray-600">-</p>
                   <p className="text-gray-600 text-sm">Sin conectar</p>
