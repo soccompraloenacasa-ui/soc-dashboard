@@ -19,11 +19,11 @@ import MetaAds from './pages/marketing/MetaAds';
 import MLAds from './pages/marketing/MLAds';
 
 // Inventario
-import StockConsolidado from './pages/inventario/index';
+import StockGeneral from './pages/inventario/StockGeneral';
 import InventarioSync from './pages/inventario/Sync';
 
 // Config
-import Conexiones from './pages/config/index';
+import Conexiones from './pages/config/Conexiones';
 import Usuarios from './pages/config/Usuarios';
 import Settings from './pages/config/Settings';
 
@@ -52,7 +52,7 @@ export default function App() {
         <Route path="marketing/ml-ads" element={<MLAds />} />
 
         {/* Inventario */}
-        <Route path="inventario" element={<StockConsolidado />} />
+        <Route path="inventario" element={<StockGeneral />} />
         <Route path="inventario/sync" element={<InventarioSync />} />
 
         {/* Config */}
