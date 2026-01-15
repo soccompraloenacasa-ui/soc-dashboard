@@ -3,6 +3,10 @@
     {
       "source": "/api/shopify/callback",
       "destination": "https://mercado-libre-production-b0cc.up.railway.app/api/v1/shopify/auth/callback"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
     }
   ]
 }
