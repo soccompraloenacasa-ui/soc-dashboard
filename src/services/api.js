@@ -83,4 +83,20 @@ export const getProductsList = (channelId, params = {}) => {
 export const syncProducts = (channelId, concurrency = 5) =>
   api.post(`/ml/products/debug/sync-now?channel_id=${channelId}&concurrency=${concurrency}`);
 
+// ML Ads
+export const getMLAdsCampaigns = (channelId, dateFrom, dateTo) =>
+  api.get(`/ml/ads/campaigns?channel_id=${channelId}&date_from=${dateFrom}&date_to=${dateTo}`);
+export const syncMLAds = (channelId, dateFrom, dateTo) =>
+  api.post(`/ml/ads/sync?channel_id=${channelId}&date_from=${dateFrom}&date_to=${dateTo}`);
+export const getMLAdsMetrics = (channelId, dateFrom, dateTo, groupBy = 'day') => {
+  const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo, group_by: groupBy });
+  if (channelId) params.append('channel_id', channelId);
+  return api.get(`/ml/ads/metrics?${params}`);
+};
+export const getMLAdsProfitability = (channelId, dateFrom, dateTo, groupBy = 'month') => {
+  const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo, group_by: groupBy });
+  if (channelId) params.append('channel_id', channelId);
+  return api.get(`/ml/ads/profitability?${params}`);
+};
+
 export default api;
