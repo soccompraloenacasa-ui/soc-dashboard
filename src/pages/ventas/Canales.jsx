@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Package, RefreshCw, ArrowLeft } from 'lucide-react';
-import { getFinancials, getOrdersStats, getFinancialsByProduct, formatCOP, formatDateForAPI, CHANNEL_IDS } from '../../services/api';
+import { ShoppingBag, Package, RefreshCw, ArrowLeft, AlertCircle } from 'lucide-react';
+import { getChannels, getFinancials, getOrdersStats, getFinancialsByProduct, formatCOP, formatDateForAPI, CHANNEL_IDS } from '../../services/api';
 
-const CHANNELS = [
-  // MercadoLibre channels
-  { id: CHANNEL_IDS.ML_MAIN, name: 'COMPRALOENCASA', type: 'ml', color: 'yellow', externalId: '108098646' },
-  { id: CHANNEL_IDS.ML_CUENTA2, name: 'ML Cuenta 2', type: 'ml', color: 'yellow', externalId: '106449348', pending: true },
-  { id: CHANNEL_IDS.ML_CUENTA3, name: 'ML Cuenta 3', type: 'ml', color: 'yellow', externalId: '757777271', pending: true },
-  // Dropi channels
-  { id: CHANNEL_IDS.DROPI, name: 'Dropi Principal', type: 'dropi', color: 'orange', pending: true },
-  { id: CHANNEL_IDS.DROPI_2, name: 'Dropi Productos Propios', type: 'dropi', color: 'orange', pending: true },
-  // MasterShops - Coming soon
-  { id: 11, name: 'MasterShops', type: 'mastershops', color: 'purple', pending: true, comingSoon: true },
+// Channel type to color mapping
+const TYPE_COLORS = {
+  mercado_libre: 'yellow',
+  dropi: 'orange',
+  shopify: 'green',
+  chateapro: 'blue',
+  meta: 'blue',
+  falabella: 'lime',
+  exito: 'red',
+};
+
+// Static channel for coming soon
+const COMING_SOON_CHANNELS = [
+  { id: 'mastershops', name: 'MasterShops', type: 'mastershops', color: 'purple', comingSoon: true },
 ];
 
 export default function VentasCanales() {
+  const [channels, setChannels] = useState([]);
+  const [loadingChannels, setLoadingChannels] = useState(true);
+  const [channelsError, setChannelsError] = useState(null);
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [channelData, setChannelData] = useState(null);
@@ -28,11 +35,41 @@ export default function VentasCanales() {
     return { start, end };
   });
 
+  // Load channels from backend on mount
+  useEffect(() => {
+    loadChannels();
+  }, []);
+
   useEffect(() => {
     if (selectedChannel) {
       loadChannelData(selectedChannel);
     }
   }, [selectedChannel]);
+
+  const loadChannels = async () => {
+    setLoadingChannels(true);
+    setChannelsError(null);
+    try {
+      const response = await getChannels();
+      const backendChannels = response.data.map(ch => ({
+        id: ch.id,
+        name: ch.name,
+        type: ch.channel_type,
+        color: TYPE_COLORS[ch.channel_type] || 'gray',
+        status: ch.status,
+        isActive: ch.status === 'active',
+        isAuthenticated: ch.is_authenticated,
+        externalId: ch.external_id,
+        lastSync: ch.last_sync,
+        description: ch.description,
+      }));
+      setChannels(backendChannels);
+    } catch (e) {
+      console.error('Error loading channels:', e);
+      setChannelsError('No se pudieron cargar los canales');
+    }
+    setLoadingChannels(false);
+  };
 
   const loadChannelData = async (channel) => {
     setLoading(true);
@@ -62,65 +99,120 @@ export default function VentasCanales() {
 
   const formatDateLabel = (d) => d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 
+  // Helper to get status badge
+  const getStatusBadge = (channel) => {
+    if (channel.comingSoon) {
+      return { text: 'Próximamente', bgClass: 'bg-purple-500/20', textClass: 'text-purple-400' };
+    }
+    if (channel.status === 'active' && channel.isAuthenticated) {
+      return { text: 'Activa', bgClass: `bg-${channel.color}-500/20`, textClass: `text-${channel.color}-500` };
+    }
+    if (channel.status === 'active' && !channel.isAuthenticated) {
+      return { text: 'Sin token', bgClass: 'bg-orange-500/20', textClass: 'text-orange-400' };
+    }
+    if (channel.status === 'error') {
+      return { text: 'Error', bgClass: 'bg-red-500/20', textClass: 'text-red-400' };
+    }
+    return { text: 'Pendiente', bgClass: 'bg-gray-500/20', textClass: 'text-gray-400' };
+  };
+
+  // Check if channel is clickable
+  const isChannelClickable = (channel) => {
+    return channel.status === 'active' && channel.isAuthenticated && !channel.comingSoon;
+  };
+
+  // All channels to display (backend + coming soon)
+  const allChannels = [...channels, ...COMING_SOON_CHANNELS];
+
   // Channel selection view
   if (!selectedChannel) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ShoppingBag className="w-6 h-6 text-yellow-500" />
-            Ventas por Canal
-          </h1>
-          <p className="text-gray-500">Selecciona un canal para ver sus métricas</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              <ShoppingBag className="w-6 h-6 text-yellow-500" />
+              Ventas por Canal
+            </h1>
+            <p className="text-gray-500">Selecciona un canal para ver sus métricas</p>
+          </div>
+          <button
+            onClick={loadChannels}
+            disabled={loadingChannels}
+            className="px-3 py-2 bg-[#222] text-gray-400 rounded-lg hover:bg-[#333] flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingChannels ? 'animate-spin' : ''}`} />
+            Actualizar
+          </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {CHANNELS.map(channel => (
-            <button
-              key={channel.id}
-              onClick={() => !channel.pending && !channel.comingSoon && setSelectedChannel(channel)}
-              disabled={channel.pending || channel.comingSoon}
-              className={`bg-[#111] rounded-xl p-5 border-l-4 text-left transition-all ${
-                channel.comingSoon
-                  ? 'border-purple-500 opacity-50 cursor-not-allowed'
-                  : channel.pending
-                    ? 'border-gray-600 opacity-50 cursor-not-allowed'
-                    : `border-${channel.color}-500 hover:bg-[#1a1a1a] cursor-pointer`
-              }`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className={`font-medium ${channel.pending ? 'text-gray-400' : `text-${channel.color}-500`}`}>
-                  {channel.name}
-                </span>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  channel.comingSoon
-                    ? 'bg-purple-500/20 text-purple-400'
-                    : channel.pending
-                      ? 'bg-gray-500/20 text-gray-400'
-                      : `bg-${channel.color}-500/20 text-${channel.color}-500`
-                }`}>
-                  {channel.comingSoon ? 'Próximamente' : channel.pending ? 'Pendiente' : 'Activa'}
-                </span>
-              </div>
-              {channel.comingSoon ? (
-                <>
-                  <p className="text-2xl font-bold text-gray-600">-</p>
-                  <p className="text-gray-600 text-sm">Integración en desarrollo</p>
-                </>
-              ) : channel.pending ? (
-                <>
-                  <p className="text-2xl font-bold text-gray-600">-</p>
-                  <p className="text-gray-600 text-sm">Sin conectar</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-500 text-xs">ID: {channel.externalId}</p>
-                  <p className="text-sm text-gray-400 mt-2">Click para ver detalles</p>
-                </>
-              )}
-            </button>
-          ))}
-        </div>
+        {channelsError && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <span className="text-red-400">{channelsError}</span>
+          </div>
+        )}
+
+        {loadingChannels ? (
+          <div className="py-20 text-center">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-yellow-500 mb-4" />
+            <p className="text-gray-500">Cargando canales...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {allChannels.map(channel => {
+              const badge = getStatusBadge(channel);
+              const clickable = isChannelClickable(channel);
+
+              return (
+                <button
+                  key={channel.id}
+                  onClick={() => clickable && setSelectedChannel(channel)}
+                  disabled={!clickable}
+                  className={`bg-[#111] rounded-xl p-5 border-l-4 text-left transition-all ${
+                    channel.comingSoon
+                      ? 'border-purple-500 opacity-50 cursor-not-allowed'
+                      : !clickable
+                        ? 'border-gray-600 opacity-50 cursor-not-allowed'
+                        : `border-${channel.color}-500 hover:bg-[#1a1a1a] cursor-pointer`
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`font-medium ${!clickable ? 'text-gray-400' : `text-${channel.color}-500`}`}>
+                      {channel.name}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded ${badge.bgClass} ${badge.textClass}`}>
+                      {badge.text}
+                    </span>
+                  </div>
+                  {channel.comingSoon ? (
+                    <>
+                      <p className="text-2xl font-bold text-gray-600">-</p>
+                      <p className="text-gray-600 text-sm">Integración en desarrollo</p>
+                    </>
+                  ) : !clickable ? (
+                    <>
+                      <p className="text-2xl font-bold text-gray-600">-</p>
+                      <p className="text-gray-600 text-sm">
+                        {channel.status === 'pending_auth' ? 'Requiere conexión' : 'Sin conectar'}
+                      </p>
+                      {channel.externalId && (
+                        <p className="text-gray-600 text-xs mt-1">ID: {channel.externalId}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {channel.externalId && (
+                        <p className="text-gray-500 text-xs">ID: {channel.externalId}</p>
+                      )}
+                      <p className="text-sm text-gray-400 mt-2">Click para ver detalles</p>
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="bg-[#111] rounded-xl p-6 border border-[#222]">
           <p className="text-gray-400 text-center">

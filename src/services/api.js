@@ -33,6 +33,7 @@ export const formatCOP = (v) => {
 };
 
 // Admin / Channels
+export const getChannels = () => api.get('/channels');
 export const getChannelsStatus = () => api.get('/admin/channels-status');
 export const disconnectChannel = (channelId) => api.post(`/admin/disconnect-channel?channel_id=${channelId}`);
 
